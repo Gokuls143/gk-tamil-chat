@@ -18,8 +18,8 @@ RUN dos2unix gradlew && chmod +x gradlew
 # Copy source code
 COPY src src
 
-# Build the application
-RUN ./gradlew clean build -x test --no-daemon
+# Build the application (bootJar produces only the executable jar)
+RUN ./gradlew clean bootJar -x test --no-daemon
 
 # ===== DEBUGGING: Check if JAR file exists =====
 RUN echo "===== Checking build directory =====" && \
@@ -33,8 +33,8 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Copy the JAR file from build stage
-COPY --from=build /build/build/libs/*.jar app.jar
+# Copy the specific executable JAR file from build stage
+COPY --from=build /build/build/libs/app.jar app.jar
 
 # ===== DEBUGGING: Verify JAR was copied to runtime stage =====
 RUN echo "===== Checking /app directory =====" && \
