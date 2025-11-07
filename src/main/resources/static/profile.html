@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Profile - GK Tamil Chat</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:#0b1220;color:#e6eef8;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+    .profile-container{width:800px;max-width:100%;background:#0e1627;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .header-left{display:flex;align-items:center;gap:12px}
+    .back-btn{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none;transition:all 0.2s;font-size:.9rem;font-weight:500}
+    .back-btn:hover{background:rgba(79,70,229,0.3);transform:scale(1.02)}
+    .back-btn svg{width:18px;height:18px;fill:currentColor}
+    .header-title{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#4f46e5,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .profile-content{padding:24px;max-height:calc(100vh - 120px);overflow-y:auto}
+    .profile-section{margin-bottom:24px}
+    .section-title{font-size:1rem;font-weight:600;color:#94a3b8;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+    .profile-picture-wrapper{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px;background:#0b1220;border-radius:10px;border:1px solid rgba(255,255,255,0.08)}
+    .profile-picture{width:150px;height:150px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:3rem;overflow:hidden;border:4px solid rgba(255,255,255,0.1);position:relative}
+    .profile-picture img{width:100%;height:100%;object-fit:cover}
+    .upload-btn-wrapper{position:relative}
+    .upload-btn{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;padding:10px 20px;border-radius:8px;border:0;cursor:pointer;font-weight:600;transition:transform 0.2s}
+    .upload-btn:hover{transform:translateY(-1px)}
+    .file-input{display:none}
+    .form-group{margin-bottom:16px}
+    .form-label{display:block;font-size:.9rem;color:#94a3b8;margin-bottom:8px;font-weight:500}
+    .form-input,.form-textarea{width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;outline:none;font-family:inherit;font-size:.95rem}
+    .form-input:focus,.form-textarea:focus{border-color:rgba(79,70,229,0.5)}
+    .form-textarea{resize:vertical;min-height:100px}
+    .char-count{font-size:.8rem;color:#64748b;text-align:right;margin-top:4px}
+    .save-btn{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;padding:12px 24px;border-radius:8px;border:0;cursor:pointer;font-weight:600;font-size:1rem;width:100%;transition:transform 0.2s;margin-top:8px}
+    .save-btn:hover{transform:translateY(-1px)}
+    .save-btn:active{transform:translateY(0)}
+    .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem;display:none}
+    .alert.success{background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.3);color:#10b981}
+    .alert.error{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3);color:#ef4444}
+    .alert.show{display:block}
+    @media (max-width:768px){
+      body{padding:10px}
+      .profile-container{width:100%}
+      .profile-content{padding:16px}
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    <header>
+      <div class="header-left">
+        <a href="/landing.html" class="back-btn">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"/></svg>
+          Back to Chat
+        </a>
+      </div>
+      <div class="header-title">My Profile</div>
+    </header>
+
+    <div class="profile-content">
+      <div id="alertBox" class="alert"></div>
+
+      <!-- Profile Picture Section -->
+      <div class="profile-section">
+        <div class="section-title">Profile Picture</div>
+        <div class="profile-picture-wrapper">
+          <div class="profile-picture" id="profilePicturePreview">
+            <span id="profileInitial">U</span>
+            <img id="profileImage" style="display:none" alt="Profile Picture" />
+          </div>
+          <div class="upload-btn-wrapper">
+            <button class="upload-btn" onclick="document.getElementById('profilePictureInput').click()">
+              Upload Photo
+            </button>
+            <input type="file" id="profilePictureInput" class="file-input" accept="image/*" />
+          </div>
+          <button class="upload-btn" id="removePhotoBtn" style="background:#ef4444;display:none">Remove Photo</button>
+        </div>
+      </div>
+
+      <!-- Basic Info Section -->
+      <div class="profile-section">
+        <div class="section-title">Basic Information</div>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="username" class="form-input" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-input" readonly />
+        </div>
+      </div>
+
+      <!-- Status Section -->
+      <div class="profile-section">
+        <div class="section-title">Status</div>
+        <div class="form-group">
+          <label class="form-label">Current Status (Max 100 characters)</label>
+          <input type="text" id="status" class="form-input" placeholder="What's on your mind?" maxlength="100" />
+          <div class="char-count"><span id="statusCount">0</span>/100</div>
+        </div>
+      </div>
+
+      <!-- Description Section -->
+      <div class="profile-section">
+        <div class="section-title">About Me</div>
+        <div class="form-group">
+          <label class="form-label">Description (Max 500 characters)</label>
+          <textarea id="description" class="form-textarea" placeholder="Tell us about yourself..." maxlength="500"></textarea>
+          <div class="char-count"><span id="descCount">0</span>/500</div>
+        </div>
+      </div>
+
+      <!-- Stories Section -->
+      <div class="profile-section">
+        <div class="section-title">My Story</div>
+        <div class="form-group">
+          <label class="form-label">Story (Max 1000 characters)</label>
+          <textarea id="story" class="form-textarea" placeholder="Share your story..." maxlength="1000" style="min-height:150px"></textarea>
+          <div class="char-count"><span id="storyCount">0</span>/1000</div>
+        </div>
+      </div>
+
+      <button id="saveBtn" class="save-btn">Save Profile</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentProfilePicture = null;
+
+    function resolveUser(){
+      try{
+        const guest = JSON.parse(sessionStorage.getItem('gk_guest')||'null');
+        if(guest && guest.username) return guest.username;
+      }catch{}
+      try{
+        const u = sessionStorage.getItem('gk_user');
+        if(u) return u;
+      }catch{}
+      return null;
+    }
+
+    function showAlert(message, type){
+      const alertBox = document.getElementById('alertBox');
+      alertBox.textContent = message;
+      alertBox.className = 'alert ' + type + ' show';
+      setTimeout(()=>{
+        alertBox.classList.remove('show');
+      }, 3000);
+    }
+
+    function updateCharCount(inputId, countId){
+      const input = document.getElementById(inputId);
+      const count = document.getElementById(countId);
+      count.textContent = input.value.length;
+    }
+
+    function loadProfile(){
+      if(!currentUser){
+        showAlert('Please login to view your profile', 'error');
+        setTimeout(()=>{ window.location.href = '/index.html'; }, 2000);
+        return;
+      }
+
+      fetch('/api/profile', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(res => {
+        if(!res.ok) throw new Error('Failed to load profile');
+        return res.json();
+      })
+      .then(data => {
+        document.getElementById('username').value = data.username || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('status').value = data.status || '';
+        document.getElementById('description').value = data.description || '';
+        document.getElementById('story').value = data.story || '';
+        
+        updateCharCount('status', 'statusCount');
+        updateCharCount('description', 'descCount');
+        updateCharCount('story', 'storyCount');
+
+        if(data.profilePicture){
+          currentProfilePicture = data.profilePicture;
+          const img = document.getElementById('profileImage');
+          const initial = document.getElementById('profileInitial');
+          img.src = data.profilePicture;
+          img.style.display = 'block';
+          initial.style.display = 'none';
+          document.getElementById('removePhotoBtn').style.display = 'block';
+        }
+      })
+      .catch(err => {
+        console.error('Error loading profile:', err);
+        showAlert('Failed to load profile data', 'error');
+      });
+    }
+
+    function saveProfile(){
+      const status = document.getElementById('status').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const story = document.getElementById('story').value.trim();
+
+      const profileData = {
+        status,
+        description,
+        story,
+        profilePicture: currentProfilePicture
+      };
+
+      fetch('/api/profile', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify(profileData)
+      })
+      .then(res => {
+        if(!res.ok) throw new Error('Failed to save profile');
+        return res.json();
+      })
+      .then(data => {
+        showAlert('Profile saved successfully!', 'success');
+      })
+      .catch(err => {
+        console.error('Error saving profile:', err);
+        showAlert('Failed to save profile', 'error');
+      });
+    }
+
+    function handleProfilePictureChange(e){
+      const file = e.target.files[0];
+      if(!file) return;
+
+      if(!file.type.startsWith('image/')){
+        showAlert('Please select an image file', 'error');
+        return;
+      }
+
+      if(file.size > 5 * 1024 * 1024){
+        showAlert('Image size should be less than 5MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event){
+        const base64 = event.target.result;
+        currentProfilePicture = base64;
+        
+        const img = document.getElementById('profileImage');
+        const initial = document.getElementById('profileInitial');
+        img.src = base64;
+        img.style.display = 'block';
+        initial.style.display = 'none';
+        document.getElementById('removePhotoBtn').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeProfilePicture(){
+      currentProfilePicture = null;
+      const img = document.getElementById('profileImage');
+      const initial = document.getElementById('profileInitial');
+      img.style.display = 'none';
+      initial.style.display = 'block';
+      document.getElementById('removePhotoBtn').style.display = 'none';
+      document.getElementById('profilePictureInput').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      currentUser = resolveUser();
+      if(currentUser){
+        const initial = document.getElementById('profileInitial');
+        initial.textContent = currentUser.charAt(0).toUpperCase();
+      }
+
+      loadProfile();
+
+      document.getElementById('status').addEventListener('input', ()=>updateCharCount('status', 'statusCount'));
+      document.getElementById('description').addEventListener('input', ()=>updateCharCount('description', 'descCount'));
+      document.getElementById('story').addEventListener('input', ()=>updateCharCount('story', 'storyCount'));
+      document.getElementById('profilePictureInput').addEventListener('change', handleProfilePictureChange);
+      document.getElementById('removePhotoBtn').addEventListener('click', removeProfilePicture);
+      document.getElementById('saveBtn').addEventListener('click', saveProfile);
+    });
+  </script>
+</body>
+</html>

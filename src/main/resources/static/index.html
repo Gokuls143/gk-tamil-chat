@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Home | GK Tamilchat</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-top: #0f172a;
+      --bg-bottom: #071032;
+      --card: rgba(255,255,255,0.98);
+      --muted: #94a3b8;
+      --brand: #4f46e5;
+      --brand-2: #06b6d4;
+      --danger: #ef4444;
+      --success: #10b981;
+      --radius: 14px;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-top) 0%, #08112a 40%, var(--bg-bottom) 100%); color:#e6eef8;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+
+    .site-header{position:fixed;left:18px;top:18px;z-index:1400}
+
+    .page-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:36px;box-sizing:border-box}
+    .hero-card{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:20px;padding:36px;box-shadow:0 18px 50px rgba(2,6,23,0.55);display:flex;gap:28px;align-items:center}
+    .hero-left{flex:1;color:#f1f5f9}
+    .hero-right{width:420px}
+
+    .muted{color:var(--muted);font-size:0.95rem}
+    .btn{padding:12px 16px;border-radius:12px;border:0;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:10px}
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand-2));color:white;box-shadow:0 8px 30px rgba(79,70,229,0.18)}
+    .btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.08);color:#e6eef8}
+    .btn.outline{background:transparent;border:1px solid rgba(255,255,255,0.12);color:#e6eef8}
+
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.75));z-index:2000;padding:20px}
+    .modal{max-width:520px;width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center}
+    .form-card{background:var(--card);color:#0b1220;border-radius:16px;padding:22px;box-shadow:0 10px 40px rgba(2,6,23,0.4);width:100%;box-sizing:border-box}
+    .form-card h2{margin:0 0 12px;font-size:20px;color:#071032}
+    .form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    label{font-size:0.95rem;color:#0b1220}
+    input[type="text"],input[type="email"],input[type="password"],input[type="number"],select{
+      padding:12px 14px;border:1px solid rgba(11,17,32,0.06);border-radius:10px;font-size:0.95rem;box-sizing:border-box;background:linear-gradient(180deg,#fff,#fbfdff);
+      outline:none;
+    }
+    input:focus,select:focus{box-shadow:0 6px 18px rgba(79,70,229,0.08);border-color:rgba(79,70,229,0.35)}
+    .status{margin-top:10px;font-size:0.95rem;display:flex;gap:8px;align-items:center}
+    .status .ok{color:var(--success)} .status .err{color:var(--danger)}
+    .close-btn{position:absolute;right:14px;top:14px;background:transparent;border:none;color:#111;font-size:20px;cursor:pointer}
+    .password-group{position:relative}
+    .icon-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;padding:6px}
+  </style>
+</head>
+<body>
+  <div class="site-header">
+  </div>
+
+  <main class="page-wrap">
+    <section class="hero-card" aria-labelledby="hero-title">
+      <div class="hero-left">
+        <div class="logo" style="display:flex;gap:12px;align-items:center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="1" y="1" width="22" height="22" rx="6" fill="url(#g)"></rect>
+            <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#4f46e5"></stop><stop offset="1" stop-color="#06b6d4"></stop></linearGradient></defs>
+          </svg>
+          <div>
+            <h1 id="hero-title" style="margin:0;color:#fff;font-size:20px">GK Tamilchat</h1>
+            <div class="muted" style="margin-top:6px">Fast, focused chat for GK learners — secure and local.</div>
+          </div>
+        </div>
+
+        <p style="margin-top:18px;color:rgba(226,235,255,0.9);max-width:560px;line-height:1.45">
+          Sign in, create an account or continue as guest. Guest requires a unique username, gender and age (must be older than 16).
+        </p>
+
+        <div class="cta-row" style="margin-top:18px">
+          <button id="openLogin" class="btn primary">Sign in</button>
+          <button id="openRegister" class="btn outline">Create account</button>
+          <button id="openGuest" class="btn ghost">Continue as guest</button>
+        </div>
+      </div>
+
+      <aside class="hero-right" aria-hidden="true">
+        <div style="background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border-radius:14px; padding:22px; box-shadow:0 8px 30px rgba(2,6,23,0.4); color:#eaf4ff;">
+          <h3 style="margin:0 0 8px;color:#fff">Why GK Tamilchat?</h3>
+          <ul style="margin:0;padding-left:18px;color:var(--muted);line-height:1.6">
+            <li>Lightweight, privacy-minded</li>
+            <li>Easy registration and login</li>
+            <li>Responsive UI with accessible modals</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Login Modal (unchanged) -->
+  <div id="loginModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="form-card" style="position:relative">
+        <button class="close-btn" data-close aria-label="Close">&times;</button>
+        <form id="loginForm" aria-label="Login form">
+          <h2>Sign in</h2>
+          <div class="form-row"><label for="home-email">Email</label><input id="home-email" name="email" type="email" autocomplete="email" required /></div>
+          <div class="form-row password-group"><label for="home-password">Password</label><input id="home-password" name="password" type="password" autocomplete="current-password" required /><button type="button" id="home-toggle-password" class="icon-btn" aria-label="Hold to show password"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7z"/><circle cx="12" cy="12" r="2.5"/></svg></button></div>
+          <div class="form-actions" style="margin-top:8px"><button type="submit" class="btn primary">Sign in</button><div class="links" style="margin-left:auto;display:flex;gap:12px"><a href="#" id="homeForgot" class="text-link">Forgot password?</a><a href="#" id="openRegisterFromLogin" class="text-link">Register</a></div></div>
+          <div id="loginFeedback" class="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal (unchanged) -->
+  <div id="registerModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="form-card" style="position:relative">
+        <button class="close-btn" data-close aria-label="Close">&times;</button>
+        <form id="registerForm" aria-label="Register form">
+          <h2>Create account</h2>
+          <div class="form-row"><label for="home-reg-username">Username</label><input id="home-reg-username" name="username" type="text" autocomplete="username" required /></div>
+          <div class="form-row"><label for="home-reg-email">Email</label><input id="home-reg-email" name="email" type="email" autocomplete="email" required /></div>
+          <div class="form-row">
+            <label for="home-reg-gender">Gender</label>
+            <select id="home-reg-gender" name="gender" required style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#0b1220;color:#e6eef8;font-size:.95rem">
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-row"><label for="home-reg-age">Age</label><input id="home-reg-age" name="age" type="number" min="1" max="150" required /></div>
+          <div class="form-row password-group"><label for="home-reg-password">Password</label><input id="home-reg-password" name="password" type="password" required /><button type="button" id="home-toggle-reg-password" class="icon-btn" aria-label="Hold to show password"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7z"/><circle cx="12" cy="12" r="2.5"/></svg></button></div>
+          <div id="registerFieldError" class="status" style="color:var(--danger)" aria-live="polite"></div>
+          <div style="margin-top:10px"><button type="submit" class="btn">Register</button></div>
+          <div style="margin-top:12px;text-align:center;font-size:.85rem;color:#94a3b8">
+            By registering, you agree to the <a href="/terms.html" target="_blank" style="color:#4f46e5;text-decoration:none;font-weight:500">Terms of Use</a>
+          </div>
+          <div id="registerFeedback" class="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="form-card" style="position:relative">
+        <button class="close-btn" data-close aria-label="Close">&times;</button>
+        <form id="forgotForm" aria-label="Forgot password form">
+          <h2>Forgot Password</h2>
+          <p style="color:#94a3b8;font-size:.9rem;margin-bottom:16px">Enter your email address and we'll send you instructions to reset your password.</p>
+          <div class="form-row"><label for="forgot-email">Email</label><input id="forgot-email" name="email" type="email" autocomplete="email" required /></div>
+          <div style="margin-top:10px"><button type="submit" class="btn">Send Reset Link</button></div>
+          <div id="forgotFeedback" class="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest Modal - updated: asks username, gender, age -->
+  <div id="guestModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="form-card" style="position:relative">
+        <button class="close-btn" data-close aria-label="Close">&times;</button>
+
+        <form id="guestForm" aria-label="Guest form">
+          <h2>Continue as Guest</h2>
+
+          <div class="form-row">
+            <label for="guest-username">Choose a username</label>
+            <input id="guest-username" name="username" type="text" required placeholder="unique username" />
+          </div>
+
+          <div class="form-row">
+            <label for="guest-gender">Gender</label>
+            <select id="guest-gender" name="gender" required>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="guest-age">Your age</label>
+            <input id="guest-age" name="age" type="number" min="1" required placeholder="Enter your age" />
+            <div class="muted" style="font-size:0.85rem;margin-top:6px">You must be older than 16 to continue as guest.</div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+            <button id="guestCancel" type="button" class="btn outline">Cancel</button>
+            <button type="submit" class="btn primary">Continue</button>
+          </div>
+
+          <div id="guestFeedback" class="status" aria-live="polite" style="margin-top:12px"></div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const modalList = document.querySelectorAll('.modal-backdrop');
+    function showModal(el){ if(!el) return; el.style.display='flex'; el.setAttribute('aria-hidden','false'); const first=el.querySelector('input,select'); if(first) setTimeout(()=>first.focus(),60);}
+    function hideModal(el){ if(!el) return; el.style.display='none'; el.setAttribute('aria-hidden','true'); }
+
+    modalList.forEach(m=>{
+      m.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>hideModal(m)));
+      m.addEventListener('click', e => { if(e.target===m) hideModal(m); });
+    });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') modalList.forEach(hideModal); });
+
+    function addHold(btnId,inputId){
+      const btn=document.getElementById(btnId), input=document.getElementById(inputId);
+      if(!btn||!input) return;
+      const show=()=>{ input.type='text'; input.focus(); }, hide=()=>{ input.type='password'; };
+      btn.addEventListener('mousedown',e=>{ e.preventDefault(); show(); });
+      btn.addEventListener('mouseup',e=>{ e.preventDefault(); hide(); });
+      btn.addEventListener('mouseleave', hide);
+      btn.addEventListener('touchstart', e=>{ e.preventDefault(); show(); }, {passive:false});
+      btn.addEventListener('touchend', e=>{ e.preventDefault(); hide(); });
+      btn.addEventListener('touchcancel', hide);
+    }
+    addHold('home-toggle-password','home-password');
+    addHold('home-toggle-reg-password','home-reg-password');
+
+    document.getElementById('openLogin').addEventListener('click', ()=> showModal(document.getElementById('loginModal')));
+    document.getElementById('openRegister').addEventListener('click', ()=> showModal(document.getElementById('registerModal')));
+    document.getElementById('openGuest').addEventListener('click', ()=> showModal(document.getElementById('guestModal')));
+    document.getElementById('guestCancel').addEventListener('click', ()=> hideModal(document.getElementById('guestModal')));
+    
+    // Forgot password handler
+    document.getElementById('homeForgot')?.addEventListener('click', (e)=>{ 
+      e.preventDefault(); 
+      hideModal(document.getElementById('loginModal')); 
+      showModal(document.getElementById('forgotModal')); 
+    });
+
+    // --- Guest form logic ---
+    const guestForm = document.getElementById('guestForm');
+    const guestFeedback = document.getElementById('guestFeedback');
+
+    function isEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+    guestForm?.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      guestFeedback.textContent = '';
+      const username = (document.getElementById('guest-username')?.value || '').trim();
+      const gender = (document.getElementById('guest-gender')?.value || '').trim();
+      const ageVal = parseInt(document.getElementById('guest-age')?.value || '0', 10);
+
+      if(!username){ guestFeedback.innerHTML = '<span class="err">Username is required</span>'; return; }
+      if(!gender){ guestFeedback.innerHTML = '<span class="err">Please select gender</span>'; return; }
+      if(!ageVal || ageVal <= 16){ guestFeedback.innerHTML = '<span class="err">You must be older than 16</span>'; return; }
+
+      guestFeedback.textContent = 'Checking username availability…';
+      try {
+        // backend endpoint to check username existence (see controller snippet below)
+        const check = await fetch('/api/users/exists?username=' + encodeURIComponent(username), {cache:'no-store'});
+        if(!check.ok){
+          guestFeedback.innerHTML = '<span class="err">Unable to verify username. Try again.</span>';
+          return;
+        }
+        const exists = await check.json(); // expects boolean
+        if(exists === true){
+          guestFeedback.innerHTML = '<span class="err">This username is already taken</span>';
+          return;
+        }
+        // success: store guest info in session and allow entry
+        const guest = { username, gender, age: ageVal, guest: true };
+        sessionStorage.setItem('gk_guest', JSON.stringify(guest));
+        guestFeedback.innerHTML = '<span class="ok">Welcome, ' + username + ' — entering…</span>';
+        setTimeout(()=> { hideModal(document.getElementById('guestModal')); window.location.href = 'landing.html'; }, 700);
+      } catch (err){
+        guestFeedback.innerHTML = '<span class="err">Network error</span>';
+      }
+    });
+
+    // other handlers (login/register as before)
+  const loginForm = document.getElementById('loginForm');
+  const loginFeedback = document.getElementById('loginFeedback');
+    loginForm?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      loginFeedback.textContent='';
+      const email = (document.getElementById('home-email')?.value || '').trim().toLowerCase();
+      const password = (document.getElementById('home-password')?.value || '');
+      if(!email||!password){ loginFeedback.innerHTML='<span class="err">All fields required</span>; return; }
+      if(!isEmail(email)){ loginFeedback.innerHTML='<span class="err">Please enter a valid email</span>; return; }
+      try{
+        const res = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({email,password})});
+        if(res.ok){
+          const data = await res.json();
+          const username = data.username || email.split('@')[0];
+          try{ sessionStorage.setItem('gk_user', username); }catch(e){}
+          loginFeedback.innerHTML = '<span class="ok">Login successful — redirecting…</span>';
+          setTimeout(()=> location.href='landing.html',800);
+        }
+        else { const txt = await res.text(); loginFeedback.innerHTML = '<span class="err">'+(txt||'Invalid credentials')+'</span>'; }
+      }catch(err){ loginFeedback.innerHTML = '<span class="err">Network error</span>'; }
+    });
+
+    const regForm = document.getElementById('registerForm');
+    const regFeedback = document.getElementById('registerFeedback');
+    const regFieldError = document.getElementById('registerFieldError');
+    regForm?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      regFeedback.textContent=''; regFieldError.textContent='';
+      const username = (document.getElementById('home-reg-username')?.value || '').trim().toLowerCase();
+      const email = (document.getElementById('home-reg-email')?.value || '').trim();
+      const gender = (document.getElementById('home-reg-gender')?.value || '').trim();
+      const age = parseInt(document.getElementById('home-reg-age')?.value || '0');
+      const password = (document.getElementById('home-reg-password')?.value || '');
+      if(!username||!email||!gender||!age||!password){ regFieldError.textContent='All fields required'; return; }
+      if(!isEmail(email)){ regFieldError.textContent='Please enter a valid email'; return; }
+      if(age < 1 || age > 150){ regFieldError.textContent='Please enter a valid age'; return; }
+
+      regFeedback.textContent='Submitting...';
+      try{
+        const res = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({username,email,gender,age,password})});
+        if(res.status===201){
+          regFeedback.innerHTML = '<span class="ok">Registered — opening login…</span>';
+          setTimeout(()=>{ hideModal(document.getElementById('registerModal')); showModal(document.getElementById('loginModal')); }, 800);
+        } else if(res.status===409){
+          regFeedback.innerHTML = '<span class="err">User already registered</span>';
+          document.getElementById('home-reg-password').value = '';
+          document.getElementById('home-reg-password-confirm').value = '';
+          document.getElementById('home-reg-username')?.focus();
+        } else {
+          const txt = await res.text();
+          regFeedback.innerHTML = '<span class="err">'+(txt||'Registration failed')+'</span>';
+          document.getElementById('home-reg-password').value = '';
+          document.getElementById('home-reg-password-confirm').value = '';
+        }
+      }catch(err){
+        regFeedback.innerHTML = '<span class="err">Network error</span>';
+      }
+    });
+
+    document.getElementById('openRegisterFromLogin')?.addEventListener('click', (e)=>{ e.preventDefault(); hideModal(document.getElementById('loginModal')); showModal(document.getElementById('registerModal')); });
+
+    // Forgot password form handler
+    const forgotForm = document.getElementById('forgotForm');
+    const forgotFeedback = document.getElementById('forgotFeedback');
+    forgotForm?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      forgotFeedback.textContent='';
+      const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
+      if(!email){ forgotFeedback.innerHTML='<span class="err">Email is required</span>'; return; }
+      if(!isEmail(email)){ forgotFeedback.innerHTML='<span class="err">Please enter a valid email</span>'; return; }
+      
+      forgotFeedback.textContent='Sending...';
+      try{
+        const res = await fetch('/api/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({email})});
+        if(res.ok){
+          forgotFeedback.innerHTML = '<span class="ok">If your email is registered, you will receive password reset instructions shortly.</span>';
+          document.getElementById('forgot-email').value = '';
+        } else {
+          forgotFeedback.innerHTML = '<span class="ok">If your email is registered, you will receive password reset instructions shortly.</span>';
+        }
+      }catch(err){
+        forgotFeedback.innerHTML = '<span class="err">Network error. Please try again.</span>';
+      }
+    });
+
+    // initial hide
+    modalList.forEach(m=>hideModal(m));
+  })();
+  </script>
+</body>
+</html>
+web: java -jar build/libs/demo-0.0.1-SNAPSHOT.jar

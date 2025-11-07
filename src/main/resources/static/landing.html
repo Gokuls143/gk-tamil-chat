@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Community Chat</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:#0b1220;color:#e6eef8;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+    .chat-container{width:1260px;height:600px;display:flex;flex-direction:column;background:#0b1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;height:60px}
+    @media (max-width:1300px){
+      body{padding:10px}
+      .chat-container{width:calc(100vw - 20px);height:calc(100vh - 20px);max-width:1260px;max-height:600px}
+    }
+    @media (max-width:768px){
+      body{padding:0}
+      .chat-container{width:100vw;height:100vh;border-radius:0;border:none;max-width:none;max-height:none}
+      .sidebar{width:240px}
+    }
+    @media (max-height:620px){
+      body{padding:10px}
+      .chat-container{height:calc(100vh - 20px);max-height:600px}
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand a{color:#fff;text-decoration:none;font-weight:700;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;transition:background 0.2s}
+    .brand a:hover{background:rgba(255,255,255,0.06)}
+    .brand svg{width:20px;height:20px;fill:currentColor}
+    .profile-menu{position:relative}
+    .profile-btn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);border:2px solid rgba(255,255,255,0.1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:1rem;transition:transform 0.2s}
+    .profile-btn:hover{transform:scale(1.05)}
+    .dropdown{position:absolute;right:0;top:50px;background:#0e1627;border:1px solid rgba(255,255,255,0.1);border-radius:10px;min-width:200px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;z-index:1000}
+    .dropdown.show{display:block}
+    .dropdown-header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .dropdown-header .username{font-weight:600;font-size:.95rem}
+    .dropdown-header .email{font-size:.8rem;color:#94a3b8;margin-top:4px}
+    .dropdown-item{padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;border:0;background:transparent;width:100%;text-align:left;color:#e6eef8;font-size:.9rem}
+    .dropdown-item:hover{background:rgba(255,255,255,0.06)}
+    .dropdown-item svg{width:16px;height:16px;fill:currentColor}
+    .dropdown-divider{height:1px;background:rgba(255,255,255,0.08);margin:4px 0}
+    .main-container{flex:1;display:flex;overflow:hidden;position:relative;min-height:0}
+    .chat-section{flex:1;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.08);min-height:0}
+    .sidebar{width:280px;background:#0e1627;display:flex;flex-direction:column;overflow:hidden;position:relative;border-left:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+    .chat-section.expanded{margin-right:0}
+    .users-toggle-btn{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;padding:8px 12px;border-radius:8px;cursor:pointer;display:none;align-items:center;gap:8px;transition:all 0.2s;font-size:.9rem;font-weight:500}
+    .users-toggle-btn:hover{background:rgba(79,70,229,0.3);transform:scale(1.02)}
+    .users-toggle-btn svg{width:18px;height:18px;fill:currentColor;transition:transform 0.3s}
+    .users-toggle-btn.active svg{transform:rotate(180deg)}
+    @media (max-width:768px){
+      .users-toggle-btn{display:flex}
+      .sidebar{position:absolute;right:0;top:0;bottom:0;transform:translateX(0);transition:transform 0.3s ease;z-index:100}
+      .sidebar.collapsed{transform:translateX(100%)}
+    }
+    .sidebar-header{padding:12px 16px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:600;font-size:.95rem;display:flex;justify-content:space-between;align-items:center}
+    .user-count{font-size:.8rem;color:#94a3b8;font-weight:400}
+    .users-container{flex:1;overflow-y:auto}
+    .user-section{padding:8px}
+    .section-title{padding:8px 12px;font-size:.85rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
+    .section-title .count{font-weight:400;font-size:.8rem}
+    .section-divider{height:1px;background:rgba(255,255,255,0.06);margin:8px 12px}
+    .user-item{padding:8px 12px;margin:4px 0;border-radius:8px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px}
+    .user-item .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:.85rem;overflow:hidden;flex-shrink:0}
+    .user-item .user-avatar img{width:100%;height:100%;object-fit:cover}
+    .user-item .user-info{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+    .user-item .name{font-size:.9rem;color:#e6eef8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-item .user-status{font-size:.75rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-item .dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0}
+    .user-item .dot.online{background:#10b981;box-shadow:0 0 8px rgba(16,185,129,0.4)}
+    .empty-state{padding:20px 12px;text-align:center;color:#64748b;font-size:.85rem}
+    .status{padding:8px 12px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-size:.85rem;color:#94a3b8;flex-shrink:0}
+    .messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;min-height:0}
+    .msg{padding:8px 12px;border-radius:10px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);max-width:70%}
+    .msg .meta{font-size:.8rem;color:#94a3b8;margin-bottom:4px}
+    .msg .body{line-height:1.4}
+    .msg.me{background:linear-gradient(180deg, rgba(79,70,229,0.18), rgba(6,182,212,0.12));align-self:flex-end}
+    .compose{display:flex;gap:8px;padding:12px 16px;background:#0f172a;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+    .compose input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;outline:none}
+    .compose input:focus{border-color:rgba(79,70,229,0.5)}
+    .compose button{padding:12px 20px;border-radius:10px;border:0;background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;font-weight:600;cursor:pointer;transition:transform 0.1s}
+    .compose button:hover{transform:translateY(-1px)}
+    .compose button:active{transform:translateY(0)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <script>
+    let stompClient = null;
+    let currentUser = null;
+
+    function resolveUser(){
+      try{
+        const guest = JSON.parse(sessionStorage.getItem('gk_guest')||'null');
+        if(guest && guest.username) return guest.username;
+      }catch{}
+      try{
+        const u = sessionStorage.getItem('gk_user');
+        if(u) return u;
+      }catch{}
+      return null;
+    }
+
+    function connect(){
+      const socket = new SockJS('/chat');
+      stompClient = Stomp.over(socket);
+      stompClient.debug = function(str) { console.log('STOMP: ' + str); }; // enable debug logs
+      stompClient.connect({}, function(frame){
+        console.log('Connected to WebSocket:', frame);
+        setStatus('Connected');
+        
+        // Immediately notify server of current user to track online status
+        if(currentUser){
+          fetch('/api/user/online', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: currentUser})
+          }).then(()=>{
+            console.log('Notified server of online status');
+            loadOnlineUsers(); // Refresh the users list
+          }).catch(err=>console.error('Failed to notify online status:', err));
+        }
+        
+        stompClient.subscribe('/topic/messages', function(messageOutput){
+          try{
+            const data = JSON.parse(messageOutput.body);
+            if(data && data.content){ appendMessage(data); }
+          }catch{
+            // accept plain strings
+            appendMessage({ sender: 'system', content: messageOutput.body, timestamp: new Date().toISOString() });
+          }
+        });
+        // load history
+        fetch('/api/messages/recent?limit=50',{cache:'no-store'}).then(r=>r.json()).then(list=>{
+          document.getElementById('messages').innerHTML='';
+          (list||[]).forEach(appendMessage);
+          scrollToBottom();
+        }).catch((err)=>{ console.error('Failed to load history:', err); });
+      }, function(err){
+        console.error('WebSocket connection error:', err);
+        setStatus('Disconnected: ' + (err.message || 'Connection failed'));
+      });
+    }
+
+    function setStatus(text){
+      const el=document.getElementById('status'); if(el) el.textContent=text||'';
+    }
+
+    function sendMessage(){
+      const input = document.getElementById('chatInput');
+      const content = (input.value||'').trim();
+      if(!content || !stompClient || !stompClient.connected) return;
+      const payload = { sender: currentUser || 'anonymous', content };
+      stompClient.send('/app/sendMessage', {}, JSON.stringify(payload));
+      input.value='';
+    }
+
+    function appendMessage(msg){
+      const list = document.getElementById('messages');
+      if(!list) return;
+      const wrap = document.createElement('div');
+      const me = (currentUser && msg && msg.sender && msg.sender.toLowerCase() === currentUser.toLowerCase());
+      wrap.className = 'msg' + (me ? ' me' : '');
+      const ts = (msg.timestamp ? new Date(msg.timestamp) : new Date());
+      const timeText = ts.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      wrap.innerHTML = '<div class="meta">' + (msg.sender || 'unknown') + ' • ' + timeText + '</div>' +
+                      '<div class="body"></div>';
+      wrap.querySelector('.body').textContent = msg.content || '';
+      list.appendChild(wrap);
+      scrollToBottom();
+    }
+
+    function scrollToBottom(){
+      const list = document.getElementById('messages');
+      list && (list.scrollTop = list.scrollHeight);
+    }
+
+    function loadOnlineUsers(){
+      fetch('/api/users/all',{cache:'no-store'})
+        .then(r=>r.json())
+        .then(data=>{
+          const onlineContainer = document.getElementById('onlineUsersList');
+          const offlineContainer = document.getElementById('offlineUsersList');
+          const headerCount = document.getElementById('userCount');
+          const onlineCountEl = document.getElementById('onlineCount');
+          const offlineCountEl = document.getElementById('offlineCount');
+          
+          if(!onlineContainer || !offlineContainer) return;
+          
+          onlineContainer.innerHTML = '';
+          offlineContainer.innerHTML = '';
+          
+          if(!data || !data.users || data.users.length===0){
+            onlineContainer.innerHTML = '<div class="empty-state">No users online</div>';
+            offlineContainer.innerHTML = '<div class="empty-state">No users registered</div>';
+            if(headerCount) headerCount.textContent = '0 online';
+            if(onlineCountEl) onlineCountEl.textContent = '(0)';
+            if(offlineCountEl) offlineCountEl.textContent = '(0)';
+            return;
+          }
+          
+          // Separate users into online and offline
+          const onlineUsers = data.users.filter(u => u.online);
+          const offlineUsers = data.users.filter(u => !u.online);
+          
+          // Sort alphabetically within each group
+          onlineUsers.sort((a, b) => a.username.localeCompare(b.username));
+          offlineUsers.sort((a, b) => a.username.localeCompare(b.username));
+          
+          // Update counts
+          if(headerCount) headerCount.textContent = onlineUsers.length + ' online';
+          if(onlineCountEl) onlineCountEl.textContent = '(' + onlineUsers.length + ')';
+          if(offlineCountEl) offlineCountEl.textContent = '(' + offlineUsers.length + ')';
+          
+          // Render online users
+          if(onlineUsers.length === 0){
+            onlineContainer.innerHTML = '<div class="empty-state">No users online</div>';
+          } else {
+            onlineUsers.forEach(user=>{
+              const isCurrentUser = user.username && user.username.toLowerCase() === (currentUser||'').toLowerCase();
+              const item = document.createElement('div');
+              item.className = 'user-item';
+              const guestLabel = user.isGuest ? ' 👤' : '';
+              const nameText = isCurrentUser ? user.username + ' (You)' + guestLabel : user.username + guestLabel;
+              
+              // Create avatar
+              const avatar = document.createElement('div');
+              avatar.className = 'user-avatar';
+              if(user.profilePicture){
+                const img = document.createElement('img');
+                img.src = user.profilePicture;
+                img.alt = user.username;
+                avatar.appendChild(img);
+              } else {
+                avatar.textContent = user.username.charAt(0).toUpperCase();
+              }
+              
+              // Create user info
+              const userInfo = document.createElement('div');
+              userInfo.className = 'user-info';
+              const namEl = document.createElement('div');
+              namEl.className = 'name';
+              namEl.textContent = nameText;
+              userInfo.appendChild(namEl);
+              
+              if(user.status && !user.isGuest){
+                const statusEl = document.createElement('div');
+                statusEl.className = 'user-status';
+                statusEl.textContent = user.status;
+                userInfo.appendChild(statusEl);
+              }
+              
+              // Create online dot
+              const dot = document.createElement('div');
+              dot.className = 'dot online';
+              
+              item.appendChild(avatar);
+              item.appendChild(userInfo);
+              item.appendChild(dot);
+              onlineContainer.appendChild(item);
+            });
+          }
+          
+          // Render offline users
+          if(offlineUsers.length === 0){
+            offlineContainer.innerHTML = '<div class="empty-state">No users offline</div>';
+          } else {
+            offlineUsers.forEach(user=>{
+              const isCurrentUser = user.username && user.username.toLowerCase() === (currentUser||'').toLowerCase();
+              const item = document.createElement('div');
+              item.className = 'user-item';
+              const guestLabel = user.isGuest ? ' 👤' : '';
+              const nameText = isCurrentUser ? user.username + ' (You)' + guestLabel : user.username + guestLabel;
+              
+              // Create avatar
+              const avatar = document.createElement('div');
+              avatar.className = 'user-avatar';
+              if(user.profilePicture){
+                const img = document.createElement('img');
+                img.src = user.profilePicture;
+                img.alt = user.username;
+                avatar.appendChild(img);
+              } else {
+                avatar.textContent = user.username.charAt(0).toUpperCase();
+              }
+              
+              // Create user info
+              const userInfo = document.createElement('div');
+              userInfo.className = 'user-info';
+              const namEl = document.createElement('div');
+              namEl.className = 'name';
+              namEl.textContent = nameText;
+              userInfo.appendChild(namEl);
+              
+              if(user.status && !user.isGuest){
+                const statusEl = document.createElement('div');
+                statusEl.className = 'user-status';
+                statusEl.textContent = user.status;
+                userInfo.appendChild(statusEl);
+              }
+              
+              // Create offline dot
+              const dot = document.createElement('div');
+              dot.className = 'dot';
+              
+              item.appendChild(avatar);
+              item.appendChild(userInfo);
+              item.appendChild(dot);
+              offlineContainer.appendChild(item);
+            });
+          }
+        })
+        .catch(err=>console.error('Failed to load users:', err));
+    }
+
+    function logout(){
+      // Notify server user is going offline
+      if(currentUser){
+        fetch('/api/user/offline', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username: currentUser})
+        }).catch(()=>{});
+      }
+      
+      // Call server to invalidate session
+      fetch('/api/logout', {method:'POST'})
+        .then(()=>{
+          sessionStorage.removeItem('gk_user');
+          sessionStorage.removeItem('gk_guest');
+          if(stompClient && stompClient.connected){
+            stompClient.disconnect(()=>{
+              window.location.href = '/index.html';
+            });
+          } else {
+            window.location.href = '/index.html';
+          }
+        })
+        .catch(()=>{
+          // Even if server call fails, clear client side and redirect
+          sessionStorage.removeItem('gk_user');
+          sessionStorage.removeItem('gk_guest');
+          window.location.href = '/index.html';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      currentUser = resolveUser();
+      const nameEl = document.getElementById('dropdownUsername');
+      const initialEl = document.getElementById('userInitial');
+      if(currentUser){ 
+        nameEl.textContent = currentUser; 
+        initialEl.textContent = currentUser.charAt(0).toUpperCase();
+      }
+      else {
+        // prompt for a display name as fallback
+        const pick = prompt('Enter a display name for chat:');
+        currentUser = (pick||'anonymous').trim();
+        sessionStorage.setItem('gk_user', currentUser);
+        nameEl.textContent = currentUser;
+        initialEl.textContent = currentUser.charAt(0).toUpperCase();
+      }
+      connect();
+      document.getElementById('sendBtn').addEventListener('click', sendMessage);
+      document.getElementById('chatInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendMessage(); }});
+      
+      // Load online users initially and refresh every 10 seconds
+      loadOnlineUsers();
+      setInterval(loadOnlineUsers, 10000);
+      
+      // Profile dropdown toggle
+      document.getElementById('profileBtn').addEventListener('click', function(e){
+        e.stopPropagation();
+        document.getElementById('profileDropdown').classList.toggle('show');
+      });
+      
+      document.addEventListener('click', function(){
+        document.getElementById('profileDropdown').classList.remove('show');
+      });
+      
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+      
+      // Users sidebar toggle
+      document.getElementById('usersToggleBtn').addEventListener('click', function(){
+        const sidebar = document.getElementById('usersSidebar');
+        const btn = document.getElementById('usersToggleBtn');
+        sidebar.classList.toggle('collapsed');
+        btn.classList.toggle('active');
+      });
+    });
+  </script>
+  
+</head>
+<body>
+  <div class="chat-container">
+  <header>
+    <div class="brand">
+      <a href="/profile.html">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Profile
+      </a>
+      <span style="margin-left:20px;font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#4f46e5,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">GK Tamil Chat</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="usersToggleBtn" class="users-toggle-btn active">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        Users
+      </button>
+      <div class="profile-menu">
+      <div class="profile-btn" id="profileBtn">
+        <span id="userInitial">U</span>
+      </div>
+      <div class="dropdown" id="profileDropdown">
+        <div class="dropdown-header">
+          <div class="username" id="dropdownUsername">User</div>
+          <div class="email">Signed in</div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" id="logoutBtn">
+          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4z"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="chat-section">
+      <div id="status" class="status">Connecting…</div>
+      <div id="messages" class="messages" aria-live="polite"></div>
+      <div class="compose">
+        <input id="chatInput" type="text" placeholder="Type a message and press Enter" autocomplete="off" />
+        <button id="sendBtn" type="button">Send</button>
+      </div>
+    </div>
+    
+    <div class="sidebar" id="usersSidebar">
+      <div class="sidebar-header">
+        <span>Users</span>
+        <span class="user-count" id="userCount">Loading...</span>
+      </div>
+      <div class="users-container">
+        <div class="user-section" id="onlineSection">
+          <div class="section-title">
+            <span>Online</span>
+            <span class="count" id="onlineCount">(0)</span>
+          </div>
+          <div id="onlineUsersList">
+            <div class="empty-state">No users online</div>
+          </div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="user-section" id="offlineSection">
+          <div class="section-title">
+            <span>Offline</span>
+            <span class="count" id="offlineCount">(0)</span>
+          </div>
+          <div id="offlineUsersList">
+            <div class="empty-state">No users offline</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</body>
+</html>
