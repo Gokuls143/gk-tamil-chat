@@ -287,8 +287,8 @@
       loginFeedback.textContent='';
       const email = (document.getElementById('home-email')?.value || '').trim().toLowerCase();
       const password = (document.getElementById('home-password')?.value || '');
-      if(!email||!password){ loginFeedback.innerHTML='<span class="err">All fields required</span>; return; }
-      if(!isEmail(email)){ loginFeedback.innerHTML='<span class="err">Please enter a valid email</span>; return; }
+      if(!email||!password){ loginFeedback.innerHTML='<span class="err">All fields required</span>'; return; }
+      if(!isEmail(email)){ loginFeedback.innerHTML='<span class="err">Please enter a valid email</span>'; return; }
       try{
         const res = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({email,password})});
         if(res.ok){
