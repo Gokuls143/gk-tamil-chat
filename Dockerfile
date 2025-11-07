@@ -19,13 +19,16 @@ RUN dos2unix gradlew && chmod +x gradlew
 COPY src src
 
 # Build the application (bootJar produces only the executable jar)
-RUN ./gradlew clean bootJar -x test --no-daemon
+RUN ./gradlew clean bootJar -x test --no-daemon --stacktrace || (echo "BUILD FAILED" && exit 1)
 
 # ===== DEBUGGING: Check if JAR file exists =====
 RUN echo "===== Checking build directory =====" && \
     ls -laR /build/build/libs/ && \
     echo "===== Finding all JAR files =====" && \
     find /build -name "*.jar" -type f && \
+    echo "===== Verifying app.jar exists and is not empty =====" && \
+    test -f /build/build/libs/app.jar && echo "app.jar found" || (echo "ERROR: app.jar NOT FOUND" && exit 1) && \
+    ls -lh /build/build/libs/app.jar && \
     echo "===== End of JAR search ====="
 
 # Runtime stage
