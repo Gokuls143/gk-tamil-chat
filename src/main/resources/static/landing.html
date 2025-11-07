@@ -134,6 +134,8 @@
   <script>
     let stompClient = null;
     let currentUser = null;
+    let audioContext = null;
+    let isInitialLoad = true; // Flag to prevent notification on history load
 
     function resolveUser(){
       try{
@@ -145,6 +147,58 @@
         if(u) return u;
       }catch{}
       return null;
+    }
+
+    // Initialize audio context on first user interaction
+    function initAudioContext(){
+      if(!audioContext){
+        try{
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          console.log('Audio context initialized');
+        }catch(e){
+          console.warn('Audio not supported:', e);
+        }
+      }
+    }
+
+    // Play notification sound using Web Audio API
+    function playNotificationSound(){
+      if(!audioContext) return;
+      
+      try{
+        // Create a pleasant notification sound (two-tone beep)
+        const oscillator1 = audioContext.createOscillator();
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // First tone: 800Hz
+        oscillator1.frequency.value = 800;
+        oscillator1.type = 'sine';
+        
+        // Second tone: 1000Hz (harmony)
+        oscillator2.frequency.value = 1000;
+        oscillator2.type = 'sine';
+        
+        // Volume envelope (fade in/out)
+        const now = audioContext.currentTime;
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0.2, now + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.15);
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.15);
+        
+        console.log('Notification sound played');
+      }catch(e){
+        console.warn('Failed to play notification:', e);
+      }
     }
 
     function connect(){
@@ -170,17 +224,21 @@
         stompClient.subscribe('/topic/messages', function(messageOutput){
           try{
             const data = JSON.parse(messageOutput.body);
-            if(data && data.content){ appendMessage(data); }
+            if(data && data.content){ 
+              appendMessage(data, false); // false = not from history
+            }
           }catch{
             // accept plain strings
-            appendMessage({ sender: 'system', content: messageOutput.body, timestamp: new Date().toISOString() });
+            appendMessage({ sender: 'system', content: messageOutput.body, timestamp: new Date().toISOString() }, false);
           }
         });
         // load history
         fetch('/api/messages/recent?limit=50',{cache:'no-store'}).then(r=>r.json()).then(list=>{
           document.getElementById('messages').innerHTML='';
-          (list||[]).forEach(appendMessage);
+          (list||[]).forEach(msg => appendMessage(msg, true)); // true = from history
           scrollToBottom();
+          // Mark initial load complete after a short delay
+          setTimeout(() => { isInitialLoad = false; }, 1000);
         }).catch((err)=>{ console.error('Failed to load history:', err); });
       }, function(err){
         console.error('WebSocket connection error:', err);
@@ -201,7 +259,7 @@
       input.value='';
     }
 
-    function appendMessage(msg){
+    function appendMessage(msg, isFromHistory){
       const list = document.getElementById('messages');
       if(!list) return;
       const wrap = document.createElement('div');
@@ -214,6 +272,11 @@
       wrap.querySelector('.body').textContent = msg.content || '';
       list.appendChild(wrap);
       scrollToBottom();
+      
+      // Play notification sound for new messages from others (not from history, not from self)
+      if(!isFromHistory && !isInitialLoad && !me && msg.sender !== 'system'){
+        playNotificationSound();
+      }
     }
 
     function scrollToBottom(){
@@ -449,8 +512,22 @@
         initialEl.textContent = currentUser.charAt(0).toUpperCase();
       }
       connect();
-      document.getElementById('sendBtn').addEventListener('click', sendMessage);
-      document.getElementById('chatInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendMessage(); }});
+      
+      // Initialize audio context on user interaction
+      document.getElementById('sendBtn').addEventListener('click', function(){
+        initAudioContext();
+        sendMessage();
+      });
+      document.getElementById('chatInput').addEventListener('keydown', (e)=>{ 
+        if(e.key==='Enter'){ 
+          e.preventDefault(); 
+          initAudioContext();
+          sendMessage(); 
+        }
+      });
+      
+      // Also initialize on any click
+      document.body.addEventListener('click', initAudioContext, { once: true });
       
       // Load online users initially and refresh every 10 seconds
       loadOnlineUsers();
