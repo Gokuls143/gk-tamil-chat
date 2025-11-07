@@ -21,8 +21,12 @@ COPY src src
 # Build the application
 RUN ./gradlew clean build -x test --no-daemon
 
-# Verify the JAR was created
-RUN ls -la /build/build/libs/
+# ===== DEBUGGING: Check if JAR file exists =====
+RUN echo "===== Checking build directory =====" && \
+    ls -laR /build/build/libs/ && \
+    echo "===== Finding all JAR files =====" && \
+    find /build -name "*.jar" -type f && \
+    echo "===== End of JAR search ====="
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
@@ -32,8 +36,13 @@ WORKDIR /app
 # Copy the JAR file from build stage
 COPY --from=build /build/build/libs/*.jar app.jar
 
-# Verify the JAR was copied
-RUN ls -la /app/
+# ===== DEBUGGING: Verify JAR was copied to runtime stage =====
+RUN echo "===== Checking /app directory =====" && \
+    ls -la /app/ && \
+    echo "===== Checking if app.jar exists =====" && \
+    test -f /app/app.jar && echo "app.jar EXISTS" || echo "app.jar DOES NOT EXIST" && \
+    echo "===== File details =====" && \
+    file /app/app.jar 2>/dev/null || echo "Cannot read app.jar"
 
 # Expose port
 EXPOSE 8080
