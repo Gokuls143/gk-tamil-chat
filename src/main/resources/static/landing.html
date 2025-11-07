@@ -9,52 +9,48 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:#0b1220;color:#e6eef8;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
     .chat-container{width:1260px;height:600px;display:flex;flex-direction:column;background:#0b1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
-    header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;height:60px}
-    @media (max-width:1300px){
-      body{padding:10px}
-      .chat-container{width:calc(100vw - 20px);height:calc(100vh - 20px);max-width:1260px;max-height:600px}
-    }
-    @media (max-width:768px){
-      body{padding:0}
-      .chat-container{width:100vw;height:100vh;border-radius:0;border:none;max-width:none;max-height:none}
-      .sidebar{width:240px}
-    }
-    @media (max-height:620px){
-      body{padding:10px}
-      .chat-container{height:calc(100vh - 20px);max-height:600px}
-    }
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand a{color:#fff;text-decoration:none;font-weight:700;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;transition:background 0.2s}
+    
+    /* Header Styles */
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;min-height:60px;height:60px}
+    .brand{display:flex;gap:8px;align-items:center;flex:1;min-width:0}
+    .brand a{color:#fff;text-decoration:none;font-weight:700;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;transition:background 0.2s;white-space:nowrap}
     .brand a:hover{background:rgba(255,255,255,0.06)}
-    .brand svg{width:20px;height:20px;fill:currentColor}
+    .brand svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
+    .brand-title{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#4f46e5,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
+    .header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    
+    /* Profile Menu */
     .profile-menu{position:relative}
-    .profile-btn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);border:2px solid rgba(255,255,255,0.1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:1rem;transition:transform 0.2s}
+    .profile-btn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);border:2px solid rgba(255,255,255,0.1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:1rem;transition:transform 0.2s;overflow:hidden;flex-shrink:0}
     .profile-btn:hover{transform:scale(1.05)}
+    .profile-btn img{width:100%;height:100%;object-fit:cover}
     .dropdown{position:absolute;right:0;top:50px;background:#0e1627;border:1px solid rgba(255,255,255,0.1);border-radius:10px;min-width:200px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;z-index:1000}
     .dropdown.show{display:block}
     .dropdown-header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
-    .dropdown-header .username{font-weight:600;font-size:.95rem}
+    .dropdown-header .username{font-weight:600;font-size:.95rem;word-break:break-word}
     .dropdown-header .email{font-size:.8rem;color:#94a3b8;margin-top:4px}
     .dropdown-item{padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;border:0;background:transparent;width:100%;text-align:left;color:#e6eef8;font-size:.9rem}
     .dropdown-item:hover{background:rgba(255,255,255,0.06)}
     .dropdown-item svg{width:16px;height:16px;fill:currentColor}
     .dropdown-divider{height:1px;background:rgba(255,255,255,0.08);margin:4px 0}
+    
+    /* Main Layout */
     .main-container{flex:1;display:flex;overflow:hidden;position:relative;min-height:0}
-    .chat-section{flex:1;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.08);min-height:0}
-    .sidebar{width:280px;background:#0e1627;display:flex;flex-direction:column;overflow:hidden;position:relative;border-left:1px solid rgba(255,255,255,0.08);flex-shrink:0}
-    .chat-section.expanded{margin-right:0}
-    .users-toggle-btn{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;padding:8px 12px;border-radius:8px;cursor:pointer;display:none;align-items:center;gap:8px;transition:all 0.2s;font-size:.9rem;font-weight:500}
-    .users-toggle-btn:hover{background:rgba(79,70,229,0.3);transform:scale(1.02)}
-    .users-toggle-btn svg{width:18px;height:18px;fill:currentColor;transition:transform 0.3s}
-    .users-toggle-btn.active svg{transform:rotate(180deg)}
-    @media (max-width:768px){
-      .users-toggle-btn{display:flex}
-      .sidebar{position:absolute;right:0;top:0;bottom:0;transform:translateX(0);transition:transform 0.3s ease;z-index:100}
-      .sidebar.collapsed{transform:translateX(100%)}
-    }
-    .sidebar-header{padding:12px 16px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:600;font-size:.95rem;display:flex;justify-content:space-between;align-items:center}
+    .chat-section{flex:1;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.08);min-height:0;min-width:0}
+    
+    /* Sidebar */
+    .sidebar{width:280px;background:#0e1627;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+    .sidebar-header{padding:12px 16px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:600;font-size:.95rem;display:flex;justify-content:space-between;align-items:center;min-height:48px}
     .user-count{font-size:.8rem;color:#94a3b8;font-weight:400}
-    .users-container{flex:1;overflow-y:auto}
+    .users-container{flex:1;overflow-y:auto;overflow-x:hidden}
+    
+    /* Users Toggle Button */
+    .users-toggle-btn{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;padding:8px 12px;border-radius:8px;cursor:pointer;display:none;align-items:center;gap:6px;transition:all 0.2s;font-size:.85rem;font-weight:500;white-space:nowrap}
+    .users-toggle-btn:hover{background:rgba(79,70,229,0.3)}
+    .users-toggle-btn svg{width:16px;height:16px;fill:currentColor;transition:transform 0.3s;flex-shrink:0}
+    .users-toggle-btn.active svg{transform:rotate(180deg)}
+    
+    /* User List Items */
     .user-section{padding:8px}
     .section-title{padding:8px 12px;font-size:.85rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
     .section-title .count{font-weight:400;font-size:.8rem}
@@ -68,18 +64,70 @@
     .user-item .dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0}
     .user-item .dot.online{background:#10b981;box-shadow:0 0 8px rgba(16,185,129,0.4)}
     .empty-state{padding:20px 12px;text-align:center;color:#64748b;font-size:.85rem}
+    
+    /* Chat Messages */
     .status{padding:8px 12px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-size:.85rem;color:#94a3b8;flex-shrink:0}
-    .messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;min-height:0}
-    .msg{padding:8px 12px;border-radius:10px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);max-width:70%}
+    .messages{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;min-height:0}
+    .msg{padding:8px 12px;border-radius:10px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);max-width:70%;word-wrap:break-word}
     .msg .meta{font-size:.8rem;color:#94a3b8;margin-bottom:4px}
-    .msg .body{line-height:1.4}
+    .msg .body{line-height:1.4;word-break:break-word}
     .msg.me{background:linear-gradient(180deg, rgba(79,70,229,0.18), rgba(6,182,212,0.12));align-self:flex-end}
-    .compose{display:flex;gap:8px;padding:12px 16px;background:#0f172a;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
-    .compose input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;outline:none}
+    
+    /* Compose Area (Footer) */
+    .compose{display:flex;gap:8px;padding:12px 16px;background:#0f172a;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;min-height:60px}
+    .compose input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;outline:none;min-width:0}
     .compose input:focus{border-color:rgba(79,70,229,0.5)}
-    .compose button{padding:12px 20px;border-radius:10px;border:0;background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;font-weight:600;cursor:pointer;transition:transform 0.1s}
+    .compose button{padding:12px 20px;border-radius:10px;border:0;background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;font-weight:600;cursor:pointer;transition:transform 0.1s;white-space:nowrap;flex-shrink:0}
     .compose button:hover{transform:translateY(-1px)}
     .compose button:active{transform:translateY(0)}
+    
+    /* Tablet Responsive (768px - 1300px) */
+    @media (max-width:1300px){
+      body{padding:10px}
+      .chat-container{width:calc(100vw - 20px);height:calc(100vh - 20px);max-width:1260px;max-height:none}
+      .brand-title{font-size:1rem}
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width:768px){
+      body{padding:0}
+      .chat-container{width:100vw;height:100vh;border-radius:0;border:none;max-width:none;max-height:none}
+      header{padding:10px 12px;height:auto;min-height:56px;flex-wrap:wrap;gap:8px}
+      .brand{gap:6px;flex:1;min-width:0}
+      .brand a{padding:4px 8px;font-size:.85rem;gap:4px}
+      .brand a span{display:none}
+      .brand svg{width:16px;height:16px}
+      .brand-title{font-size:.95rem;display:none}
+      .header-actions{gap:8px}
+      .users-toggle-btn{display:flex;font-size:.8rem;padding:6px 10px}
+      .users-toggle-btn svg{width:14px;height:14px}
+      .profile-btn{width:36px;height:36px;font-size:.9rem}
+      .sidebar{position:absolute;right:0;top:0;bottom:0;width:260px;transform:translateX(0);transition:transform 0.3s ease;z-index:100;box-shadow:-4px 0 20px rgba(0,0,0,0.5)}
+      .sidebar.collapsed{transform:translateX(100%)}
+      .chat-section{border-right:none}
+      .compose{padding:10px 12px;gap:6px;min-height:56px}
+      .compose input{padding:10px 12px;font-size:.9rem}
+      .compose button{padding:10px 16px;font-size:.9rem}
+      .msg{max-width:85%}
+      .dropdown{right:-10px}
+    }
+    
+    /* Small Mobile */
+    @media (max-width:480px){
+      .brand a{font-size:.8rem}
+      .sidebar{width:240px}
+      .user-item{padding:6px 10px}
+      .user-item .user-avatar{width:28px;height:28px;font-size:.8rem}
+      .user-item .name{font-size:.85rem}
+      .user-item .user-status{font-size:.7rem}
+    }
+    
+    /* Landscape Mobile */
+    @media (max-height:500px){
+      header{min-height:48px;padding:8px 12px}
+      .compose{min-height:48px;padding:8px 12px}
+      .messages{padding:8px 12px}
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
@@ -437,29 +485,30 @@
     <div class="brand">
       <a href="/profile.html">
         <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-        Profile
+        <span>Profile</span>
       </a>
-      <span style="margin-left:20px;font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#4f46e5,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">GK Tamil Chat</span>
+      <span class="brand-title">GK Tamil Chat</span>
     </div>
-    <div style="display:flex;align-items:center;gap:12px">
+    <div class="header-actions">
       <button id="usersToggleBtn" class="users-toggle-btn active">
         <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         Users
       </button>
       <div class="profile-menu">
-      <div class="profile-btn" id="profileBtn">
-        <span id="userInitial">U</span>
-      </div>
-      <div class="dropdown" id="profileDropdown">
-        <div class="dropdown-header">
-          <div class="username" id="dropdownUsername">User</div>
-          <div class="email">Signed in</div>
+        <div class="profile-btn" id="profileBtn">
+          <span id="userInitial">U</span>
         </div>
-        <div class="dropdown-divider"></div>
-        <button class="dropdown-item" id="logoutBtn">
-          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4z"/></svg>
-          Logout
-        </button>
+        <div class="dropdown" id="profileDropdown">
+          <div class="dropdown-header">
+            <div class="username" id="dropdownUsername">User</div>
+            <div class="email">Signed in</div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" id="logoutBtn">
+            <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4z"/></svg>
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   </header>
