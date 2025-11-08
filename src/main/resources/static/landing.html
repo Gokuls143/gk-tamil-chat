@@ -98,6 +98,11 @@
     .msg-attachment audio{width:100%;max-width:300px}
     .msg-attachment .file-name{color:#94a3b8;font-size:0.8rem;margin-top:4px}
     
+    /* Embedded media from URLs */
+    .embedded-media{margin:8px 0}
+    .embedded-media .url-link{color:#94a3b8;font-size:0.75rem;margin-bottom:4px;word-break:break-all}
+    .embedded-media img{display:block;border:1px solid rgba(255,255,255,0.08)}
+    
     /* File input hidden */
     #fileInput{display:none}
     
@@ -332,6 +337,74 @@
       input.value='';
     }
 
+    function processMessageContent(content) {
+      if (!content) return { hasMedia: false, html: '' };
+      
+      // URL regex pattern for detecting URLs
+      const urlRegex = /(https?:\/\/[^\s]+)/gi;
+      const urls = content.match(urlRegex) || [];
+      
+      if (urls.length === 0) {
+        return { hasMedia: false, html: content };
+      }
+      
+      let processedContent = content;
+      let hasEmbeddedMedia = false;
+      
+      urls.forEach(url => {
+        // Check if URL is an image or GIF
+        if (isImageUrl(url)) {
+          const imageHtml = `
+            <div class="embedded-media">
+              <div class="url-link">${url}</div>
+              <img src="${url}" alt="Embedded image" onclick="openImageModal('${url}')" 
+                   style="max-width: 300px; max-height: 200px; border-radius: 8px; margin-top: 8px; cursor: pointer;"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <div style="display: none; color: #ef4444; font-size: 0.8rem; margin-top: 4px;">Failed to load image</div>
+            </div>
+          `;
+          processedContent = processedContent.replace(url, imageHtml);
+          hasEmbeddedMedia = true;
+        } else {
+          // Make other URLs clickable
+          const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #06b6d4; text-decoration: underline;">${url}</a>`;
+          processedContent = processedContent.replace(url, linkHtml);
+        }
+      });
+      
+      return { hasMedia: hasEmbeddedMedia, html: processedContent };
+    }
+    
+    function isImageUrl(url) {
+      // Check for common image/GIF patterns
+      const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i;
+      const gifDomains = [
+        'tenor.com',
+        'giphy.com', 
+        'gfycat.com',
+        'imgur.com',
+        'media.discordapp.net',
+        'cdn.discordapp.com'
+      ];
+      
+      // Check file extension
+      if (imageExtensions.test(url)) {
+        return true;
+      }
+      
+      // Check known GIF hosting domains
+      try {
+        const urlObj = new URL(url);
+        if (gifDomains.some(domain => urlObj.hostname.includes(domain))) {
+          return true;
+        }
+      } catch (e) {
+        // Invalid URL, skip
+      }
+      
+      return false;
+    }
+
     function appendMessage(msg, isFromHistory){
       const list = document.getElementById('messages');
       if(!list) return;
@@ -344,7 +417,14 @@
                       '<div class="body"></div>';
       
       const bodyDiv = wrap.querySelector('.body');
-      bodyDiv.textContent = msg.content || '';
+      
+      // Process message content for URLs and GIFs
+      const processedContent = processMessageContent(msg.content || '');
+      if (processedContent.hasMedia) {
+        bodyDiv.innerHTML = processedContent.html;
+      } else {
+        bodyDiv.textContent = msg.content || '';
+      }
       
       // Add attachment if present
       if (msg.attachmentUrl && msg.attachmentType) {
