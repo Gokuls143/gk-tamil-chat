@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Community Chat</title>
   <link rel="stylesheet" href="/style.css" />
   <style>
@@ -139,20 +139,60 @@
       body{
         padding:0;
         padding-top:env(safe-area-inset-top, 0px);
-        padding-bottom:env(safe-area-inset-bottom, 0px);
+        padding-bottom:0; /* Remove bottom padding to prevent scrolling */
       }
       .chat-container{
         width:100vw;
         height:100vh;
-        height:calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        height:100dvh; /* Use dynamic viewport height for better mobile support */
         border-radius:0;
         border:none;
         max-width:none;
         max-height:none;
+        position:fixed; /* Fix position to prevent scrolling issues */
+        top:0;
+        left:0;
+      }
+      
+      /* Ensure chat section takes remaining space */
+      .main-container{
+        flex:1;
+        min-height:0; /* Allow flex child to shrink */
+        display:flex;
+        flex-direction:row;
+      }
+      
+      .chat-section{
+        flex:1;
+        min-height:0;
+        display:flex;
+        flex-direction:column;
+      }
+      
+      /* Messages area should be scrollable */
+      .messages{
+        flex:1;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        padding:8px 12px;
+        scroll-behavior:smooth;
+      }
+      
+      /* Compose section should stick to bottom */
+      .compose{
+        position:sticky;
+        bottom:0;
+        background:#0f172a;
+        border-top:1px solid rgba(255,255,255,0.08);
+        padding:12px;
+        gap:8px;
+        min-height:60px;
+        z-index:10;
       }
       .top-safe-bar{display:block}
-      .bottom-safe-bar{display:block}
-      header{padding:10px 12px;height:auto;min-height:56px;flex-wrap:wrap;gap:8px}
+      .bottom-safe-bar{display:none} /* Hide bottom safe bar to prevent input issues */
+      
+      header{padding:10px 12px;height:auto;min-height:56px;flex-wrap:wrap;gap:8px;flex-shrink:0}
       .brand{gap:6px;flex:1;min-width:0}
       .brand a{padding:4px 8px;font-size:.85rem;gap:4px}
       .brand a span{display:none}
@@ -164,19 +204,14 @@
       .profile-btn{width:36px;height:36px;font-size:.9rem;touch-action:manipulation}
       .sidebar{position:absolute;right:0;top:0;bottom:0;width:280px;transform:translateX(0);transition:transform 0.3s ease;z-index:100;box-shadow:-4px 0 20px rgba(0,0,0,0.5)}
       .sidebar.collapsed{transform:translateX(100%)}
-      .chat-section{border-right:none}
-      .compose{padding:12px;gap:8px;min-height:60px}
-      .compose input{padding:12px;font-size:16px;border-radius:12px;-webkit-appearance:none;appearance:none} /* Prevents zoom on iOS */
-      .compose button{padding:12px 18px;font-size:.9rem;min-height:44px;touch-action:manipulation}
+      
+      .compose input{padding:12px;font-size:16px;border-radius:12px;-webkit-appearance:none;appearance:none;flex:1} /* Prevents zoom on iOS */
+      .compose button{padding:12px 18px;font-size:.9rem;min-height:44px;touch-action:manipulation;flex-shrink:0}
       .attach-btn{width:44px;height:44px;flex-shrink:0}
       .msg{max-width:85%;font-size:.9rem;padding:10px 12px}
       .dropdown{right:-10px;min-width:220px}
       .user-item{padding:8px 12px;min-height:48px;touch-action:manipulation}
       .user-item .user-avatar{width:32px;height:32px}
-      .messages{padding:8px 12px;scroll-behavior:smooth}
-      /* Improve scrolling on mobile */
-      .messages{-webkit-overflow-scrolling:touch}
-      .users-container{-webkit-overflow-scrolling:touch}
     }
     
     /* Small Mobile */
@@ -919,6 +954,32 @@
       document.getElementById('attachBtn').addEventListener('click', handleAttachmentClick);
       document.getElementById('fileInput').addEventListener('change', handleFileSelect);
       document.getElementById('cancelAttachment').addEventListener('click', cancelAttachment);
+      
+      // Mobile input focus handling
+      const chatInput = document.getElementById('chatInput');
+      chatInput.addEventListener('focus', function() {
+        // Delay to allow virtual keyboard to appear
+        setTimeout(() => {
+          // Scroll to bottom to ensure input is visible
+          scrollToBottom();
+          // Scroll input into view
+          chatInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 300);
+      });
+      
+      // Prevent body scroll when input is focused on mobile
+      chatInput.addEventListener('focusin', function() {
+        if (window.innerWidth <= 768) {
+          document.body.style.overflow = 'hidden';
+        }
+      });
+      
+      chatInput.addEventListener('focusout', function() {
+        if (window.innerWidth <= 768) {
+          document.body.style.overflow = '';
+          setTimeout(scrollToBottom, 100);
+        }
+      });
       
       // Also initialize on any click
       document.body.addEventListener('click', initAudioContext, { once: true });
