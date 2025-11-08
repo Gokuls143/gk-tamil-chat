@@ -21,9 +21,22 @@
       font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
 
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-top) 0%, #08112a 40%, var(--bg-bottom) 100%); color:#e6eef8;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    html,body{
+      height:100%;
+      margin:0;
+      background:linear-gradient(180deg,var(--bg-top) 0%, #08112a 40%, var(--bg-bottom) 100%); 
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased; 
+      -moz-osx-font-smoothing:grayscale;
+      padding-top:env(safe-area-inset-top, 0px);
+      padding-bottom:env(safe-area-inset-bottom, 0px);
+    }
 
-    .site-header{position:fixed;left:18px;top:18px;z-index:1400}
+    /* Safe area bars */
+    .top-safe-bar{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top, 0px);background:var(--bg-top);z-index:9999;display:none}
+    .bottom-safe-bar{position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom, 0px);background:var(--bg-bottom);z-index:9999;display:none}
+
+    .site-header{position:fixed;left:18px;top:calc(18px + env(safe-area-inset-top, 0px));z-index:1400}
 
     .page-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:36px;box-sizing:border-box}
     .hero-card{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:20px;padding:36px;box-shadow:0 18px 50px rgba(2,6,23,0.55);display:flex;gap:28px;align-items:center}
@@ -61,7 +74,14 @@
     }
 
     @media (max-width: 768px) {
-      .page-wrap{padding:16px}
+      .top-safe-bar{display:block}
+      .bottom-safe-bar{display:block}
+      
+      .page-wrap{
+        padding:16px;
+        padding-top:calc(16px + env(safe-area-inset-top, 0px));
+        padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+      }
       .hero-card{padding:20px;gap:20px;border-radius:16px}
       .hero-left h1{font-size:18px}
       .hero-left .muted{font-size:0.9rem}
@@ -77,7 +97,11 @@
     }
 
     @media (max-width: 480px) {
-      .page-wrap{padding:12px}
+      .page-wrap{
+        padding:12px;
+        padding-top:calc(12px + env(safe-area-inset-top, 0px));
+        padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+      }
       .hero-card{padding:16px;gap:16px;border-radius:12px}
       .logo{gap:8px !important}
       .logo svg{width:40px;height:40px}
@@ -105,6 +129,10 @@
   </style>
 </head>
 <body>
+  <!-- Safe area bars for mobile browsers -->
+  <div class="top-safe-bar"></div>
+  <div class="bottom-safe-bar"></div>
+  
   <div class="site-header">
   </div>
 

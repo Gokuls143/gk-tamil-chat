@@ -7,7 +7,25 @@
   <link rel="stylesheet" href="/style.css" />
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:#0b1220;color:#e6eef8;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+    
+    /* Safe area bars for mobile browsers */
+    .top-safe-bar{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top, 0px);background:#0b1220;z-index:9999;min-height:0;display:none}
+    .bottom-safe-bar{position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom, 0px);background:#0b1220;z-index:9999;min-height:0;display:none}
+    
+    /* Adjust body to account for safe areas */
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+      background:#0b1220;
+      color:#e6eef8;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:20px;
+      padding-top:max(20px, env(safe-area-inset-top));
+      padding-bottom:max(20px, env(safe-area-inset-bottom));
+    }
+    
     .chat-container{width:1260px;height:600px;display:flex;flex-direction:column;background:#0b1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
     
     /* Header Styles */
@@ -108,15 +126,33 @@
     
     /* Tablet Responsive (768px - 1300px) */
     @media (max-width:1300px){
-      body{padding:10px}
+      body{
+        padding:10px;
+        padding-top:max(10px, env(safe-area-inset-top));
+        padding-bottom:max(10px, env(safe-area-inset-bottom));
+      }
       .chat-container{width:calc(100vw - 20px);height:calc(100vh - 20px);max-width:1260px;max-height:none}
       .brand-title{font-size:1rem}
     }
     
     /* Mobile Responsive */
     @media (max-width:768px){
-      body{padding:0}
-      .chat-container{width:100vw;height:100vh;border-radius:0;border:none;max-width:none;max-height:none}
+      body{
+        padding:0;
+        padding-top:env(safe-area-inset-top, 0px);
+        padding-bottom:env(safe-area-inset-bottom, 0px);
+      }
+      .chat-container{
+        width:100vw;
+        height:100vh;
+        height:calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        border-radius:0;
+        border:none;
+        max-width:none;
+        max-height:none;
+      }
+      .top-safe-bar{display:block}
+      .bottom-safe-bar{display:block}
       header{padding:10px 12px;height:auto;min-height:56px;flex-wrap:wrap;gap:8px}
       .brand{gap:6px;flex:1;min-width:0}
       .brand a{padding:4px 8px;font-size:.85rem;gap:4px}
@@ -922,6 +958,10 @@
   
 </head>
 <body>
+  <!-- Safe area bars for mobile browsers -->
+  <div class="top-safe-bar"></div>
+  <div class="bottom-safe-bar"></div>
+  
   <div class="chat-container">
   <header>
     <div class="brand">
