@@ -11,11 +11,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUsernameIn(Set<String> usernames);
     User findByUsername(String username);
     User findByEmail(String email);
-    
-    // Admin queries
-    long countByIsAdminTrue();
-    long countByIsMutedTrue();
-    long countByIsBannedTrue();
-    List<User> findByIsAdminTrue();
-    List<User> findByIsSuperAdminTrue();
 }

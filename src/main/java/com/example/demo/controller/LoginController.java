@@ -101,11 +101,11 @@ public class LoginController {
         if (ok) {
             String username = existingUser.getUsername();
             
-            // Check if user is banned
-            if (existingUser.getIsBanned()) {
-                log.info("Banned user {} attempted to login", username);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Please contact administrators.");
-            }
+            // TODO: Check if user is banned (admin feature)
+            // if (existingUser.getIsBanned()) {
+            //     log.info("Banned user {} attempted to login", username);
+            //     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Please contact administrators.");
+            // }
             
             // Check if there's already a DIFFERENT user in THIS BROWSER SESSION
             Object currentSessionUser = session.getAttribute("username");
@@ -136,15 +136,15 @@ public class LoginController {
             // Register this browser session for this user
             this.sessionService.registerUserSession(username, session);
             
-            // Auto-promote super admin (popcorn user)
-            if ("popcorn".equals(username) || "gokulkannans92@gmail.com".equals(existingUser.getEmail())) {
-                if (!existingUser.getIsSuperAdmin()) {
-                    existingUser.setIsSuperAdmin(true);
-                    existingUser.setIsAdmin(true);
-                    this.userRepository.save(existingUser);
-                    log.info("Auto-promoted user {} to Super Admin", username);
-                }
-            }
+            // TODO: Auto-promote super admin (admin feature)
+            // if ("popcorn".equals(username) || "gokulkannans92@gmail.com".equals(existingUser.getEmail())) {
+            //     if (!existingUser.getIsSuperAdmin()) {
+            //         existingUser.setIsSuperAdmin(true);
+            //         existingUser.setIsAdmin(true);
+            //         this.userRepository.save(existingUser);
+            //         log.info("Auto-promoted user {} to Super Admin", username);
+            //     }
+            // }
             
             try {
                 session.setAttribute("username", username);
@@ -156,8 +156,9 @@ public class LoginController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Login successful");
             response.put("username", username);
-            response.put("isAdmin", existingUser.getIsAdmin().toString());
-            response.put("isSuperAdmin", existingUser.getIsSuperAdmin().toString());
+            // TODO: Add admin status when admin features are enabled
+            // response.put("isAdmin", existingUser.getIsAdmin().toString());
+            // response.put("isSuperAdmin", existingUser.getIsSuperAdmin().toString());
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
@@ -179,13 +180,14 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
         }
         
-        if (user.getIsBanned()) {
-            // User is banned, invalidate session
-            if (session != null) {
-                session.invalidate();
-            }
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account banned");
-        }
+        // TODO: Check if user is banned (admin feature)
+        // if (user.getIsBanned()) {
+        //     // User is banned, invalidate session
+        //     if (session != null) {
+        //         session.invalidate();
+        //     }
+        //     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account banned");
+        // }
         
         return ResponseEntity.ok(String.valueOf(u));
     }
