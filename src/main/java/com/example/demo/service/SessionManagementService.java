@@ -121,4 +121,29 @@ public class SessionManagementService {
         Set<String> sessions = this.userToSessionsMap.get(username);
         return sessions != null ? sessions.size() : 0;
     }
+    
+    /**
+     * Check if user is currently online
+     * @param username the username
+     * @return true if user has active sessions
+     */
+    public boolean isUserOnline(String username) {
+        return this.hasActiveSession(username);
+    }
+    
+    /**
+     * Get total count of online users
+     * @return number of users with active sessions
+     */
+    public long getOnlineUserCount() {
+        return this.userToSessionsMap.size();
+    }
+    
+    /**
+     * Remove all sessions for a user (for admin actions like ban)
+     * @param username the username
+     */
+    public void removeUserSessions(String username) {
+        this.removeUserSession(username);
+    }
 }
