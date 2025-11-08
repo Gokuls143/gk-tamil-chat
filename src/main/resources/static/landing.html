@@ -81,6 +81,26 @@
     .compose button:hover{transform:translateY(-1px)}
     .compose button:active{transform:translateY(0)}
     
+    /* Attachment button */
+    .attach-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.1s;flex-shrink:0}
+    .attach-btn:hover{background:#1a2332;border-color:rgba(255,255,255,0.15)}
+    .attach-btn.loading{opacity:0.6;cursor:not-allowed}
+    
+    /* Attachment preview */
+    .attachment-preview{display:none;padding:8px 12px;background:#0b1426;border:1px solid rgba(255,255,255,0.08);border-radius:8px;margin:8px 0;align-items:center;gap:8px}
+    .attachment-preview.show{display:flex}
+    .attachment-preview .file-info{flex:1;font-size:0.85rem;color:#94a3b8}
+    .attachment-preview .cancel-btn{background:none;border:none;color:#ef4444;cursor:pointer;padding:4px;font-size:14px}
+    
+    /* Message attachments */
+    .msg-attachment{margin:8px 0;border-radius:8px;overflow:hidden;max-width:100%}
+    .msg-attachment img{max-width:300px;max-height:200px;border-radius:8px;cursor:pointer}
+    .msg-attachment audio{width:100%;max-width:300px}
+    .msg-attachment .file-name{color:#94a3b8;font-size:0.8rem;margin-top:4px}
+    
+    /* File input hidden */
+    #fileInput{display:none}
+    
     /* Tablet Responsive (768px - 1300px) */
     @media (max-width:1300px){
       body{padding:10px}
@@ -108,6 +128,7 @@
       .compose{padding:12px;gap:8px;min-height:60px}
       .compose input{padding:12px;font-size:16px;border-radius:12px;-webkit-appearance:none;appearance:none} /* Prevents zoom on iOS */
       .compose button{padding:12px 18px;font-size:.9rem;min-height:44px;touch-action:manipulation}
+      .attach-btn{width:44px;height:44px;flex-shrink:0}
       .msg{max-width:85%;font-size:.9rem;padding:10px 12px}
       .dropdown{right:-10px;min-width:220px}
       .user-item{padding:8px 12px;min-height:48px;touch-action:manipulation}
@@ -129,6 +150,7 @@
       .compose{padding:10px;min-height:56px}
       .compose input{padding:10px 12px;font-size:16px}
       .compose button{padding:10px 14px;font-size:.85rem;min-height:40px}
+      .attach-btn{width:40px;height:40px}
       .users-toggle-btn{padding:6px 10px;font-size:.75rem;min-height:36px}
       .profile-btn{width:32px;height:32px;font-size:.8rem}
       .msg{font-size:.85rem;padding:8px 10px}
@@ -138,6 +160,7 @@
     @media (max-width: 360px) {
       .sidebar{width:240px}
       .compose{padding:8px}
+      .attach-btn{width:36px;height:36px}
       .users-toggle-btn{padding:6px 8px}
     }
     
@@ -319,7 +342,33 @@
       const timeText = ts.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       wrap.innerHTML = '<div class="meta">' + (msg.sender || 'unknown') + ' • ' + timeText + '</div>' +
                       '<div class="body"></div>';
-      wrap.querySelector('.body').textContent = msg.content || '';
+      
+      const bodyDiv = wrap.querySelector('.body');
+      bodyDiv.textContent = msg.content || '';
+      
+      // Add attachment if present
+      if (msg.attachmentUrl && msg.attachmentType) {
+        const attachmentDiv = document.createElement('div');
+        attachmentDiv.className = 'msg-attachment';
+        
+        if (msg.attachmentType === 'image' || msg.attachmentType === 'gif') {
+          attachmentDiv.innerHTML = `
+            <img src="${msg.attachmentUrl}" alt="${msg.attachmentName || 'Image'}" onclick="openImageModal('${msg.attachmentUrl}')">
+            <div class="file-name">${msg.attachmentName || 'Image'}</div>
+          `;
+        } else if (msg.attachmentType === 'audio') {
+          attachmentDiv.innerHTML = `
+            <audio controls>
+              <source src="${msg.attachmentUrl}" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+            <div class="file-name">${msg.attachmentName || 'Audio'}</div>
+          `;
+        }
+        
+        bodyDiv.appendChild(attachmentDiv);
+      }
+      
       list.appendChild(wrap);
       scrollToBottom();
       
@@ -616,20 +665,128 @@
       });
     }
     
+    // Attachment handling
+    let selectedFile = null;
+    
+    function handleAttachmentClick() {
+      document.getElementById('fileInput').click();
+    }
+    
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 
+                           'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a'];
+      
+      if (!allowedTypes.includes(file.type)) {
+        alert('Unsupported file type. Only images (JPEG, PNG, WebP), GIFs, and audio (MP3, WAV, OGG, M4A) are allowed.');
+        return;
+      }
+      
+      // Validate file size
+      const maxSize = file.type.startsWith('audio/') ? 10 * 1024 * 1024 : 8 * 1024 * 1024; // 10MB for audio, 8MB for images
+      if (file.size > maxSize) {
+        alert('File too large. Max sizes: Images/GIFs: 8MB, Audio: 10MB');
+        return;
+      }
+      
+      selectedFile = file;
+      showAttachmentPreview(file);
+    }
+    
+    function showAttachmentPreview(file) {
+      const preview = document.getElementById('attachmentPreview');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileSize = (file.size / 1024 / 1024).toFixed(2) + 'MB';
+      const fileType = file.type.startsWith('audio/') ? '🎵 Audio' : 
+                      file.type === 'image/gif' ? '🎭 GIF' : '🖼️ Image';
+      
+      fileInfo.textContent = `${fileType}: ${file.name} (${fileSize})`;
+      preview.classList.add('show');
+    }
+    
+    function cancelAttachment() {
+      selectedFile = null;
+      document.getElementById('attachmentPreview').classList.remove('show');
+      document.getElementById('fileInput').value = '';
+    }
+    
+    function uploadFile() {
+      if (!selectedFile) return;
+      
+      const attachBtn = document.getElementById('attachBtn');
+      attachBtn.classList.add('loading');
+      
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('sender', currentUser || 'anonymous');
+      
+      fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        // File uploaded successfully, message will be broadcast via WebSocket
+        cancelAttachment();
+      })
+      .catch(error => {
+        console.error('Upload failed:', error);
+        alert('Failed to upload file. Please try again.');
+      })
+      .finally(() => {
+        attachBtn.classList.remove('loading');
+      });
+    }
+    
+    function openImageModal(imageUrl) {
+      // Create modal for viewing full-size images
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.9); z-index: 9999; display: flex; 
+        align-items: center; justify-content: center; cursor: pointer;
+      `;
+      
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.style.cssText = 'max-width: 90%; max-height: 90%; border-radius: 8px;';
+      
+      modal.appendChild(img);
+      document.body.appendChild(modal);
+      
+      modal.onclick = () => document.body.removeChild(modal);
+    }
+    
     // Initialize app after DOM is ready
     function initializeApp() {
       // Initialize audio context on user interaction
       document.getElementById('sendBtn').addEventListener('click', function(){
         initAudioContext();
-        sendMessage();
+        if (selectedFile) {
+          uploadFile();
+        } else {
+          sendMessage();
+        }
       });
       document.getElementById('chatInput').addEventListener('keydown', (e)=>{ 
         if(e.key==='Enter'){ 
           e.preventDefault(); 
           initAudioContext();
-          sendMessage(); 
+          if (selectedFile) {
+            uploadFile();
+          } else {
+            sendMessage();
+          }
         }
       });
+      
+      // Attachment event listeners
+      document.getElementById('attachBtn').addEventListener('click', handleAttachmentClick);
+      document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+      document.getElementById('cancelAttachment').addEventListener('click', cancelAttachment);
       
       // Also initialize on any click
       document.body.addEventListener('click', initAudioContext, { once: true });
@@ -713,7 +870,17 @@
     <div class="chat-section">
       <div id="status" class="status">Connecting…</div>
       <div id="messages" class="messages" aria-live="polite"></div>
+      <div id="attachmentPreview" class="attachment-preview">
+        <div class="file-info" id="fileInfo"></div>
+        <button class="cancel-btn" id="cancelAttachment" title="Cancel attachment">✕</button>
+      </div>
       <div class="compose">
+        <button class="attach-btn" id="attachBtn" title="Add attachment">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C13.1 2 14 2.9 14 4V12C14 13.1 13.1 14 12 14C10.9 14 10 13.1 10 12V4C10 2.9 10.9 2 12 2ZM21 9V11H14V9H21ZM10 9V11H3V9H10Z"/>
+          </svg>
+        </button>
+        <input type="file" id="fileInput" accept="image/*,audio/*,.gif" />
         <input id="chatInput" type="text" placeholder="Type a message and press Enter" autocomplete="off" />
         <button id="sendBtn" type="button">Send</button>
       </div>

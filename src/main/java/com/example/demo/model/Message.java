@@ -26,6 +26,19 @@ public class Message {
     @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
 
+    // Attachment fields
+    @Column
+    private String attachmentType; // "image", "audio", "gif"
+    
+    @Column
+    private String attachmentUrl; // URL to the uploaded file
+    
+    @Column
+    private String attachmentName; // Original filename
+    
+    @Column
+    private Long attachmentSize; // File size in bytes
+
     public Message() {}
 
     public Message(String sender, String content) {
@@ -45,4 +58,17 @@ public class Message {
 
     public LocalDateTime getTimestamp() { return this.timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    
+    // Attachment getters and setters
+    public String getAttachmentType() { return this.attachmentType; }
+    public void setAttachmentType(String attachmentType) { this.attachmentType = attachmentType; }
+    
+    public String getAttachmentUrl() { return this.attachmentUrl; }
+    public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
+    
+    public String getAttachmentName() { return this.attachmentName; }
+    public void setAttachmentName(String attachmentName) { this.attachmentName = attachmentName; }
+    
+    public Long getAttachmentSize() { return this.attachmentSize; }
+    public void setAttachmentSize(Long attachmentSize) { this.attachmentSize = attachmentSize; }
 }
