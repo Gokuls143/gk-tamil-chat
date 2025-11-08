@@ -57,23 +57,34 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("sender") String sender) {
         
+        System.out.println("Upload request received - File: " + 
+            (file != null ? file.getOriginalFilename() + " (" + file.getSize() + " bytes)" : "null") + 
+            ", Sender: " + sender);
+            
         try {
             // Validate file
-            if (file.isEmpty()) {
+            if (file == null || file.isEmpty()) {
+                System.out.println("Error: File is null or empty");
                 return ResponseEntity.badRequest().body("File is empty");
             }
             
             String contentType = file.getContentType();
+            System.out.println("File content type: " + contentType);
+            
             String fileType = this.getFileType(contentType);
             long fileSize = file.getSize();
             
+            System.out.println("Detected file type: " + fileType + ", Size: " + fileSize);
+            
             if (fileType == null) {
+                System.out.println("Error: Unsupported file type - " + contentType);
                 return ResponseEntity.badRequest()
                     .body("Unsupported file type. Only images (JPEG, PNG, WebP), GIFs, and audio (MP3, WAV, OGG, M4A) are allowed.");
             }
             
             // Check file size limits
             if (!this.isValidFileSize(fileType, fileSize)) {
+                System.out.println("Error: File too large - " + fileSize + " bytes for type " + fileType);
                 return ResponseEntity.badRequest()
                     .body("File too large. Max sizes: Images/GIFs: 8MB, Audio: 10MB");
             }
