@@ -138,15 +138,37 @@
     let isInitialLoad = true; // Flag to prevent notification on history load
 
     function resolveUser(){
-      try{
-        const guest = JSON.parse(sessionStorage.getItem('gk_guest')||'null');
-        if(guest && guest.username) return guest.username;
-      }catch{}
-      try{
-        const u = sessionStorage.getItem('gk_user');
-        if(u) return u;
-      }catch{}
-      return null;
+      // First check server session (this works across tabs)
+      return fetch('/api/session/me', { 
+        method: 'GET', 
+        credentials: 'same-origin' 
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error('No server session');
+      })
+      .then(username => {
+        if (username) {
+          // Update sessionStorage to match server session
+          sessionStorage.setItem('gk_user', username);
+          return username;
+        }
+        throw new Error('Empty username');
+      })
+      .catch(() => {
+        // Fallback to sessionStorage (for guests)
+        try{
+          const guest = JSON.parse(sessionStorage.getItem('gk_guest')||'null');
+          if(guest && guest.username) return guest.username;
+        }catch{}
+        try{
+          const u = sessionStorage.getItem('gk_user');
+          if(u) return u;
+        }catch{}
+        return null;
+      });
     }
 
     // Initialize audio context on first user interaction
@@ -487,12 +509,39 @@
     }
 
     document.addEventListener('DOMContentLoaded', function(){
-      currentUser = resolveUser();
+      // Handle async user resolution
+      const userPromise = resolveUser();
+      
+      if (userPromise instanceof Promise) {
+        // New async version
+        userPromise.then(username => {
+          currentUser = username;
+          if (username) {
+            initializeUserInterface(username);
+            connect();
+          } else {
+            // No user found, redirect to login or handle as guest
+            console.log('No user session found');
+          }
+        }).catch(err => {
+          console.log('Error resolving user:', err);
+        });
+      } else {
+        // Fallback for synchronous version
+        currentUser = userPromise;
+        if (currentUser) {
+          initializeUserInterface(currentUser);
+          connect();
+        }
+      }
+    });
+    
+    function initializeUserInterface(username) {
       const nameEl = document.getElementById('dropdownUsername');
       const initialEl = document.getElementById('userInitial');
-      if(currentUser){ 
-        nameEl.textContent = currentUser; 
-        initialEl.textContent = currentUser.charAt(0).toUpperCase();
+      if(username){ 
+        nameEl.textContent = username; 
+        initialEl.textContent = username.charAt(0).toUpperCase();
         
         // Load profile picture if user is logged in (not guest)
         try{
@@ -502,17 +551,20 @@
             loadUserProfile();
           }
         }catch{}
-      }
-      else {
+      } else {
         // prompt for a display name as fallback
         const pick = prompt('Enter a display name for chat:');
-        currentUser = (pick||'anonymous').trim();
-        sessionStorage.setItem('gk_user', currentUser);
-        nameEl.textContent = currentUser;
-        initialEl.textContent = currentUser.charAt(0).toUpperCase();
+        const username = (pick||'anonymous').trim();
+        sessionStorage.setItem('gk_user', username);
+        const nameEl = document.getElementById('dropdownUsername');
+        const initialEl = document.getElementById('userInitial');
+        nameEl.textContent = username;
+        initialEl.textContent = username.charAt(0).toUpperCase();
       }
-      connect();
-      
+    }
+    
+    // Initialize app after DOM is ready
+    function initializeApp() {
       // Initialize audio context on user interaction
       document.getElementById('sendBtn').addEventListener('click', function(){
         initAudioContext();
@@ -552,6 +604,11 @@
         sidebar.classList.toggle('collapsed');
         btn.classList.toggle('active');
       });
+    }
+    
+    // Run initialization after user is resolved
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeApp();
     });
   </script>
   
