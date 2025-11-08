@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.SessionManagementService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -32,13 +33,16 @@ public class LoginController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender; // may be null
+    private final SessionManagementService sessionService;
 
     public LoginController(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
-                           @Autowired(required = false) JavaMailSender mailSender) {
+                           @Autowired(required = false) JavaMailSender mailSender,
+                           SessionManagementService sessionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender; // null if mail not configured
+        this.sessionService = sessionService;
     }
 
     @PostMapping("/register")
@@ -96,24 +100,39 @@ public class LoginController {
         boolean ok = this.passwordEncoder.matches(password, existingUser.getPassword());
         log.debug("Password match for {}: {}", email, ok);
         if (ok) {
-            // Check if there's already a different user logged in this session
+            String username = existingUser.getUsername();
+            
+            // Check if this user already has an active session
+            if (this.sessionService.hasActiveSession(username)) {
+                String activeSessionId = this.sessionService.getActiveSessionId(username);
+                log.info("User {} already has active session {}. Current session: {}", 
+                        username, activeSessionId, session.getId());
+                // Remove the old session mapping
+                this.sessionService.removeUserSession(username);
+            }
+            
+            // Check if current session has a different user
             Object currentSessionUser = session.getAttribute("username");
-            if (currentSessionUser != null && !existingUser.getUsername().equals(currentSessionUser)) {
-                // Different user is already logged in - invalidate current session and create new one
-                log.info("Different user ({}) already logged in session. Switching to new user: {}", 
-                         currentSessionUser, existingUser.getUsername());
+            if (currentSessionUser != null && !username.equals(currentSessionUser)) {
+                log.info("Different user ({}) logged in current session. Switching to: {}", 
+                         currentSessionUser, username);
+                // Remove old user's session mapping
+                this.sessionService.removeUserSession(currentSessionUser.toString());
+                // Invalidate and create new session
                 session.invalidate();
-                // Get new session after invalidation
                 session = request.getSession(true);
             }
             
+            // Register new session for user
+            this.sessionService.registerUserSession(username, session);
+            
             try {
-                session.setAttribute("username", existingUser.getUsername());
+                session.setAttribute("username", username);
             } catch (Exception ignore) {}
             
             Map<String, String> response = new HashMap<>();
             response.put("message", "Login successful");
-            response.put("username", existingUser.getUsername());
+            response.put("username", username);
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
@@ -136,6 +155,19 @@ public class LoginController {
             response.put("username", currentUser.toString());
         }
         return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(jakarta.servlet.http.HttpSession session) {
+        if (session != null) {
+            Object username = session.getAttribute("username");
+            if (username != null) {
+                this.sessionService.removeUserSession(username.toString());
+                this.sessionService.removeSession(session.getId());
+            }
+            session.invalidate();
+        }
+        return ResponseEntity.ok("Logged out successfully");
     }
 
     @PostMapping("/forgot-username")
@@ -191,13 +223,5 @@ public class LoginController {
         }
         boolean exists = this.userRepository.findByUsername(username.trim().toLowerCase()) != null;
         return ResponseEntity.ok(exists);
-    }
-
-    @PostMapping("/api/logout")
-    public ResponseEntity<String> logout(jakarta.servlet.http.HttpSession session) {
-        if (session != null) {
-            session.invalidate();
-        }
-        return ResponseEntity.ok("Logged out successfully");
     }
 }
