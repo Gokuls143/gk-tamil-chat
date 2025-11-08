@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.SessionManagementService;
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api")
@@ -102,38 +101,33 @@ public class LoginController {
         if (ok) {
             String username = existingUser.getUsername();
             
-            // Check if there's already a DIFFERENT user in this session
+            // Check if there's already a DIFFERENT user in THIS BROWSER SESSION
             Object currentSessionUser = session.getAttribute("username");
             if (currentSessionUser != null && !username.equals(currentSessionUser)) {
-                log.info("UNIVERSAL LOGOUT: Different user ({}) detected in session. Switching to: {}", 
+                log.info("BROWSER SESSION SWITCH: Different user ({}) detected in this browser session. Switching to: {}", 
                          currentSessionUser, username);
                 
-                // Clean up old user's session completely
-                this.sessionService.removeUserSession(currentSessionUser.toString());
+                // Clean up old user from THIS SESSION only
                 this.sessionService.removeSession(session.getId());
                 
-                // FORCE invalidate session - this will log out ALL tabs
+                // FORCE invalidate session - this affects only THIS browser
                 try {
                     session.invalidate();
-                    log.info("Session invalidated - ALL tabs will need to login again");
+                    log.info("Browser session invalidated - only this browser will need to login again");
                 } catch (Exception e) {
                     log.warn("Session already invalidated: {}", e.getMessage());
                 }
                 
-                // Create completely new session
+                // Create completely new session for this browser
                 session = request.getSession(true);
-                log.info("New session created: {} for user: {}", session.getId(), username);
+                log.info("New browser session created: {} for user: {}", session.getId(), username);
             }
             
-            // Check if this user was logged in somewhere else and clean up
-            if (this.sessionService.hasActiveSession(username)) {
-                String activeSessionId = this.sessionService.getActiveSessionId(username);
-                log.info("User {} had previous session {}. Replacing with new session: {}", 
-                        username, activeSessionId, session.getId());
-                this.sessionService.removeUserSession(username);
-            }
+            // For browser-specific approach: Allow same user to login from different browsers
+            // Only track this session, don't remove user's other browser sessions
+            log.info("Allowing user {} to login in browser session: {}", username, session.getId());
             
-            // Register new session for this user
+            // Register this browser session for this user
             this.sessionService.registerUserSession(username, session);
             
             try {
@@ -175,8 +169,10 @@ public class LoginController {
         if (session != null) {
             Object username = session.getAttribute("username");
             if (username != null) {
-                this.sessionService.removeUserSession(username.toString());
+                // Only remove THIS browser session, keep other browsers logged in
                 this.sessionService.removeSession(session.getId());
+                log.info("Logged out user {} from browser session {} (other browser sessions remain active)", 
+                         username, session.getId());
             }
             session.invalidate();
         }
