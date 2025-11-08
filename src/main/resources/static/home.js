@@ -114,10 +114,37 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       feedback.textContent = '';
-      const username = form.querySelector('[name="username"], #username')?.value || '';
+      
+      const email = form.querySelector('[name="email"], #email, [name="username"], #username')?.value || '';
       const password = form.querySelector('[name="password"], #password')?.value || '';
+      
+      // Check if there's already a user logged in
       try {
-        const resp = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+        const sessionResp = await fetch('/api/session/check', { method: 'GET', credentials: 'same-origin' });
+        if (sessionResp.ok) {
+          const sessionData = await sessionResp.json();
+          if (sessionData.hasActiveSession) {
+            const proceed = confirm(`You are already logged in as "${sessionData.username}". 
+            
+Logging in with a different account will sign you out from the current session. 
+
+Do you want to continue?`);
+            if (!proceed) {
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.log('Could not check session:', err);
+      }
+      
+      try {
+        const resp = await fetch('/api/login', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ email, password }),
+          credentials: 'same-origin'
+        });
         if (resp.ok) {
           feedback.innerHTML = '<span class="ok">Login successful — redirecting…</span>';
           setTimeout(() => window.location.href = 'landing.html', 700);

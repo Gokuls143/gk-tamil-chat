@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api")
@@ -76,7 +77,9 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginRequest, jakarta.servlet.http.HttpSession session) {
+    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginRequest, 
+                                      jakarta.servlet.http.HttpSession session,
+                                      jakarta.servlet.http.HttpServletRequest request) {
         if (loginRequest == null || loginRequest.get("email") == null || loginRequest.get("password") == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email and password are required");
         }
@@ -93,6 +96,17 @@ public class LoginController {
         boolean ok = this.passwordEncoder.matches(password, existingUser.getPassword());
         log.debug("Password match for {}: {}", email, ok);
         if (ok) {
+            // Check if there's already a different user logged in this session
+            Object currentSessionUser = session.getAttribute("username");
+            if (currentSessionUser != null && !existingUser.getUsername().equals(currentSessionUser)) {
+                // Different user is already logged in - invalidate current session and create new one
+                log.info("Different user ({}) already logged in session. Switching to new user: {}", 
+                         currentSessionUser, existingUser.getUsername());
+                session.invalidate();
+                // Get new session after invalidation
+                session = request.getSession(true);
+            }
+            
             try {
                 session.setAttribute("username", existingUser.getUsername());
             } catch (Exception ignore) {}
@@ -111,6 +125,17 @@ public class LoginController {
         Object u = session == null ? null : session.getAttribute("username");
         if (u == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
         return ResponseEntity.ok(String.valueOf(u));
+    }
+    
+    @GetMapping("/session/check")
+    public ResponseEntity<?> checkExistingSession(jakarta.servlet.http.HttpSession session) {
+        Object currentUser = session == null ? null : session.getAttribute("username");
+        Map<String, Object> response = new HashMap<>();
+        response.put("hasActiveSession", currentUser != null);
+        if (currentUser != null) {
+            response.put("username", currentUser.toString());
+        }
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-username")
