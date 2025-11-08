@@ -305,7 +305,7 @@ public class AdminController {
         }
 
         User user = userOpt.get();
-        this.messageRepository.deleteByUsername(user.getUsername());
+        this.messageRepository.deleteBySender(user.getUsername());
 
         return ResponseEntity.ok(Map.of("success", true, "message", "User chat cleared successfully"));
     }
@@ -328,7 +328,7 @@ public class AdminController {
 
         String deletedUsername = user.getUsername();
         this.sessionService.removeUserSessions(deletedUsername);
-        this.messageRepository.deleteByUsername(deletedUsername);
+        this.messageRepository.deleteBySender(deletedUsername);
         this.userRepository.delete(user);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "User deleted successfully"));

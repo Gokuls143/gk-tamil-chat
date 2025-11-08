@@ -14,10 +14,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 	// fetch recent messages for chat history
 	List<Message> findTop50ByOrderByTimestampDesc();
 	
-	// delete messages by username (for admin clear chat function)
+	// delete messages by sender (for admin clear chat function)
 	@Modifying
 	@Transactional
-	@Query("DELETE FROM Message m WHERE m.username = :username")
-	void deleteByUsername(@Param("username") String username);
+	@Query("DELETE FROM Message m WHERE m.sender = :sender")
+	void deleteBySender(@Param("sender") String sender);
 }
 
