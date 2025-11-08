@@ -14,7 +14,15 @@ public class DataInitializer implements ApplicationRunner {
     
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        // Create initial super admin if no admins exist
-        this.adminService.createInitialSuperAdmin();
+        try {
+            System.out.println("Initializing data...");
+            // Create initial super admin if no admins exist
+            this.adminService.createInitialSuperAdmin();
+            System.out.println("Data initialization completed successfully.");
+        } catch (Exception e) {
+            System.err.println("Data initialization failed: " + e.getMessage());
+            // Don't rethrow - allow application to continue
+            e.printStackTrace();
+        }
     }
 }

@@ -1,18 +1,24 @@
 package com.example.demo.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HealthController {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @GetMapping("/")
+    public ResponseEntity<String> root() {
+        return ResponseEntity.ok("Tamil Chat Application is running! Visit /index.html for the chat interface.");
+    }
     
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
