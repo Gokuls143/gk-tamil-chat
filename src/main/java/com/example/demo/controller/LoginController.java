@@ -101,6 +101,12 @@ public class LoginController {
         if (ok) {
             String username = existingUser.getUsername();
             
+            // Check if user is banned
+            if (existingUser.getIsBanned()) {
+                log.info("Banned user {} attempted to login", username);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Please contact administrators.");
+            }
+            
             // Check if there's already a DIFFERENT user in THIS BROWSER SESSION
             Object currentSessionUser = session.getAttribute("username");
             if (currentSessionUser != null && !username.equals(currentSessionUser)) {
@@ -130,6 +136,16 @@ public class LoginController {
             // Register this browser session for this user
             this.sessionService.registerUserSession(username, session);
             
+            // Auto-promote super admin (popcorn user)
+            if ("popcorn".equals(username) || "gokulkannans92@gmail.com".equals(existingUser.getEmail())) {
+                if (!existingUser.getIsSuperAdmin()) {
+                    existingUser.setIsSuperAdmin(true);
+                    existingUser.setIsAdmin(true);
+                    this.userRepository.save(existingUser);
+                    log.info("Auto-promoted user {} to Super Admin", username);
+                }
+            }
+            
             try {
                 session.setAttribute("username", username);
                 log.info("SUCCESS: User {} logged in with session: {}", username, session.getId());
@@ -140,6 +156,8 @@ public class LoginController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Login successful");
             response.put("username", username);
+            response.put("isAdmin", existingUser.getIsAdmin().toString());
+            response.put("isSuperAdmin", existingUser.getIsSuperAdmin().toString());
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
@@ -150,6 +168,25 @@ public class LoginController {
     public ResponseEntity<String> currentUser(jakarta.servlet.http.HttpSession session) {
         Object u = session == null ? null : session.getAttribute("username");
         if (u == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+        
+        // Check if user is still valid (not banned/deleted)
+        User user = this.userRepository.findByUsername(u.toString());
+        if (user == null) {
+            // User was deleted, invalidate session
+            if (session != null) {
+                session.invalidate();
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+        }
+        
+        if (user.getIsBanned()) {
+            // User is banned, invalidate session
+            if (session != null) {
+                session.invalidate();
+            }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account banned");
+        }
+        
         return ResponseEntity.ok(String.valueOf(u));
     }
     

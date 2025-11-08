@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Admin Panel - GK Tamil Chat</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:#0b1220;color:#e6eef8;min-height:100vh;padding:20px}
+        
+        /* Header */
+        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding:20px;background:#0e1627;border-radius:12px;border:1px solid rgba(255,255,255,0.08)}
+        .header h1{background:linear-gradient(135deg,#ef4444,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:1.8rem;font-weight:700}
+        .header .actions{display:flex;gap:12px;align-items:center}
+        .btn{padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s}
+        .btn.back{background:rgba(79,70,229,0.2);color:#e6eef8;border:1px solid rgba(79,70,229,0.3)}
+        .btn.back:hover{background:rgba(79,70,229,0.3)}
+        .btn.danger{background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.3)}
+        .btn.success{background:rgba(34,197,94,0.2);color:#86efac;border:1px solid rgba(34,197,94,0.3)}
+        .btn.warning{background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.3)}
+        .btn.primary{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff}
+        .btn:hover{transform:translateY(-1px)}
+        .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        
+        /* Stats Cards */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:30px}
+        .stat-card{background:#0e1627;border-radius:10px;padding:20px;border:1px solid rgba(255,255,255,0.08)}
+        .stat-card .number{font-size:2rem;font-weight:700;background:linear-gradient(135deg,#4f46e5,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .stat-card .label{color:#94a3b8;margin-top:8px;font-size:0.9rem}
+        
+        /* User Lists */
+        .section{margin-bottom:30px}
+        .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .section-title{font-size:1.3rem;font-weight:600;color:#e6eef8}
+        .section-badge{background:rgba(79,70,229,0.2);color:#a5b4fc;padding:4px 8px;border-radius:6px;font-size:0.8rem;font-weight:600}
+        
+        /* User Table */
+        .user-table{background:#0e1627;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08)}
+        .user-header{display:grid;grid-template-columns:1fr 1fr 80px 100px 300px;padding:16px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:600;color:#94a3b8;font-size:0.9rem}
+        .user-row{display:grid;grid-template-columns:1fr 1fr 80px 100px 300px;padding:16px;border-bottom:1px solid rgba(255,255,255,0.05);align-items:center}
+        .user-row:hover{background:rgba(255,255,255,0.02)}
+        .user-row:last-child{border-bottom:none}
+        
+        .user-info{display:flex;flex-direction:column;gap:4px}
+        .username{font-weight:600;color:#e6eef8}
+        .email{font-size:0.8rem;color:#94a3b8}
+        .user-meta{display:flex;flex-direction:column;gap:2px;font-size:0.85rem}
+        .age-gender{color:#94a3b8}
+        .status-text{color:#a5b4fc;font-style:italic}
+        
+        .status-badge{padding:4px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;text-align:center}
+        .status-badge.online{background:rgba(34,197,94,0.2);color:#86efac}
+        .status-badge.offline{background:rgba(107,114,128,0.2);color:#9ca3af}
+        
+        .role-badges{display:flex;flex-direction:column;gap:4px}
+        .role-badge{padding:3px 6px;border-radius:4px;font-size:0.7rem;font-weight:600;text-align:center}
+        .role-badge.super-admin{background:rgba(239,68,68,0.3);color:#fca5a5}
+        .role-badge.admin{background:rgba(245,158,11,0.3);color:#fcd34d}
+        .role-badge.muted{background:rgba(107,114,128,0.3);color:#9ca3af}
+        .role-badge.banned{background:rgba(239,68,68,0.2);color:#fca5a5;text-decoration:line-through}
+        
+        .user-actions{display:flex;gap:6px;flex-wrap:wrap}
+        .btn.small{padding:6px 10px;font-size:0.75rem;min-width:auto}
+        
+        /* Loading and Error States */
+        .loading{text-align:center;padding:40px;color:#94a3b8}
+        .error{background:rgba(239,68,68,0.1);color:#fca5a5;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(239,68,68,0.2)}
+        .success{background:rgba(34,197,94,0.1);color:#86efac;padding:16px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(34,197,94,0.2)}
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .user-header,.user-row{grid-template-columns:1fr;gap:8px;text-align:left}
+            .user-actions{justify-content:flex-start}
+            .stats-grid{grid-template-columns:repeat(2,1fr)}
+            .header{flex-direction:column;gap:16px}
+            .header .actions{order:1}
+        }
+        
+        @media (max-width: 480px) {
+            body{padding:10px}
+            .stats-grid{grid-template-columns:1fr}
+            .user-actions{flex-direction:column;align-items:flex-start}
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ Admin Panel</h1>
+        <div class="actions">
+            <a href="/landing.html" class="btn back">← Back to Chat</a>
+            <button id="refreshBtn" class="btn primary">🔄 Refresh</button>
+        </div>
+    </div>
+    
+    <div id="errorMessage" class="error" style="display:none;"></div>
+    <div id="successMessage" class="success" style="display:none;"></div>
+    
+    <!-- Stats Section -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number" id="totalUsers">-</div>
+            <div class="label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="onlineUsers">-</div>
+            <div class="label">Online Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="adminUsers">-</div>
+            <div class="label">Admins</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="bannedUsers">-</div>
+            <div class="label">Banned</div>
+        </div>
+    </div>
+    
+    <!-- Online Users Section -->
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">🟢 Online Users</h2>
+            <span class="section-badge" id="onlineCount">0</span>
+        </div>
+        <div class="user-table">
+            <div class="user-header">
+                <div>User Info</div>
+                <div>Details</div>
+                <div>Status</div>
+                <div>Role</div>
+                <div>Actions</div>
+            </div>
+            <div id="onlineUsersList" class="loading">Loading online users...</div>
+        </div>
+    </div>
+    
+    <!-- Offline Users Section -->
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">⚫ Offline Users</h2>
+            <span class="section-badge" id="offlineCount">0</span>
+        </div>
+        <div class="user-table">
+            <div class="user-header">
+                <div>User Info</div>
+                <div>Details</div>
+                <div>Status</div>
+                <div>Role</div>
+                <div>Actions</div>
+            </div>
+            <div id="offlineUsersList" class="loading">Loading offline users...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let isSuperAdmin = false;
+        
+        // Utility functions
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 3000);
+        }
+        
+        function checkAdminAccess() {
+            return fetch('/session/me', { credentials: 'same-origin' })
+                .then(response => {
+                    if (!response.ok) {
+                        window.location.href = '/';
+                        throw new Error('Not logged in');
+                    }
+                    return response.text();
+                })
+                .then(username => {
+                    currentUser = username;
+                    return username;
+                });
+        }
+        
+        function loadStats() {
+            return fetch('/api/admin/stats', { credentials: 'same-origin' })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            window.location.href = '/';
+                        }
+                        throw new Error('Failed to load stats');
+                    }
+                    return response.json();
+                })
+                .then(stats => {
+                    document.getElementById('totalUsers').textContent = stats.totalUsers;
+                    document.getElementById('onlineUsers').textContent = stats.onlineUsers;
+                    document.getElementById('adminUsers').textContent = stats.adminUsers;
+                    document.getElementById('bannedUsers').textContent = stats.bannedUsers;
+                });
+        }
+        
+        function loadUsers() {
+            return fetch('/api/admin/users', { credentials: 'same-origin' })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            window.location.href = '/';
+                        }
+                        throw new Error('Failed to load users');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayUsers('online', data.online);
+                    displayUsers('offline', data.offline);
+                    document.getElementById('onlineCount').textContent = data.online.length;
+                    document.getElementById('offlineCount').textContent = data.offline.length;
+                    
+                    // Check if current user is super admin
+                    const currentUserData = data.total.find(u => u.username === currentUser);
+                    isSuperAdmin = currentUserData && currentUserData.isSuperAdmin;
+                });
+        }
+        
+        function displayUsers(type, users) {
+            const container = document.getElementById(type + 'UsersList');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8">No ' + type + ' users</div>';
+                return;
+            }
+            
+            container.innerHTML = users.map(user => {
+                const badges = [];
+                if (user.isSuperAdmin) badges.push('<div class="role-badge super-admin">SUPER ADMIN</div>');
+                if (user.isAdmin && !user.isSuperAdmin) badges.push('<div class="role-badge admin">ADMIN</div>');
+                if (user.isMuted) badges.push('<div class="role-badge muted">MUTED</div>');
+                if (user.isBanned) badges.push('<div class="role-badge banned">BANNED</div>');
+                
+                const actions = generateActions(user);
+                
+                return `
+                    <div class="user-row">
+                        <div class="user-info">
+                            <div class="username">${user.username}</div>
+                            <div class="email">${user.email}</div>
+                        </div>
+                        <div class="user-meta">
+                            <div class="age-gender">${user.age || 'N/A'} years, ${user.gender || 'N/A'}</div>
+                            <div class="status-text">${user.status || 'No status'}</div>
+                        </div>
+                        <div class="status-badge ${type}">${type.toUpperCase()}</div>
+                        <div class="role-badges">${badges.join('')}</div>
+                        <div class="user-actions">${actions}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function generateActions(user) {
+            if (user.username === currentUser) {
+                return '<span style="color:#94a3b8;font-size:0.8rem">You</span>';
+            }
+            
+            if (user.isSuperAdmin) {
+                return '<span style="color:#94a3b8;font-size:0.8rem">Super Admin</span>';
+            }
+            
+            const actions = [];
+            
+            // Promote/Demote (Super Admin only)
+            if (isSuperAdmin) {
+                if (user.isAdmin) {
+                    actions.push(`<button class="btn small warning" onclick="demoteUser(${user.id})">Demote</button>`);
+                } else {
+                    actions.push(`<button class="btn small success" onclick="promoteUser(${user.id})">Promote</button>`);
+                }
+            }
+            
+            // Mute/Unmute
+            if (user.isMuted) {
+                actions.push(`<button class="btn small success" onclick="muteUser(${user.id})">Unmute</button>`);
+            } else {
+                actions.push(`<button class="btn small warning" onclick="muteUser(${user.id})">Mute</button>`);
+            }
+            
+            // Ban/Unban
+            if (user.isBanned) {
+                actions.push(`<button class="btn small success" onclick="banUser(${user.id})">Unban</button>`);
+            } else {
+                actions.push(`<button class="btn small danger" onclick="banUser(${user.id})">Ban</button>`);
+            }
+            
+            // Clear Chat
+            actions.push(`<button class="btn small primary" onclick="clearChat(${user.id})">Clear Chat</button>`);
+            
+            // Delete (Super Admin only)
+            if (isSuperAdmin) {
+                actions.push(`<button class="btn small danger" onclick="deleteUser(${user.id}, '${user.username}')">Delete</button>`);
+            }
+            
+            return actions.join('');
+        }
+        
+        // Admin Actions
+        function promoteUser(userId) {
+            if (!confirm('Promote this user to admin?')) return;
+            
+            fetch(`/api/admin/promote/${userId}`, { 
+                method: 'POST', 
+                credentials: 'same-origin' 
+            })
+            .then(response => response.text())
+            .then(message => {
+                showSuccess(message);
+                refresh();
+            })
+            .catch(error => showError('Failed to promote user'));
+        }
+        
+        function demoteUser(userId) {
+            if (!confirm('Demote this admin to regular user?')) return;
+            
+            fetch(`/api/admin/demote/${userId}`, { 
+                method: 'POST', 
+                credentials: 'same-origin' 
+            })
+            .then(response => response.text())
+            .then(message => {
+                showSuccess(message);
+                refresh();
+            })
+            .catch(error => showError('Failed to demote user'));
+        }
+        
+        function muteUser(userId) {
+            fetch(`/api/admin/mute/${userId}`, { 
+                method: 'POST', 
+                credentials: 'same-origin' 
+            })
+            .then(response => response.text())
+            .then(message => {
+                showSuccess(message);
+                refresh();
+            })
+            .catch(error => showError('Failed to mute/unmute user'));
+        }
+        
+        function banUser(userId) {
+            fetch(`/api/admin/ban/${userId}`, { 
+                method: 'POST', 
+                credentials: 'same-origin' 
+            })
+            .then(response => response.text())
+            .then(message => {
+                showSuccess(message);
+                refresh();
+            })
+            .catch(error => showError('Failed to ban/unban user'));
+        }
+        
+        function clearChat(userId) {
+            if (!confirm('Clear all chat history for this user?')) return;
+            
+            fetch(`/api/admin/clear-chat/${userId}`, { 
+                method: 'POST', 
+                credentials: 'same-origin' 
+            })
+            .then(response => response.text())
+            .then(message => {
+                showSuccess(message);
+            })
+            .catch(error => showError('Failed to clear chat'));
+        }
+        
+        function deleteUser(userId, username) {
+            if (!confirm(`PERMANENTLY DELETE user "${username}"? This cannot be undone!`)) return;
+            if (!confirm('Are you absolutely sure? This will delete all user data!')) return;
+            
+            fetch(`/api/admin/delete/${userId}`, { 
+                method: 'DELETE', 
+                credentials: 'same-origin' 
+            })
+            .then(response => response.text())
+            .then(message => {
+                showSuccess(message);
+                refresh();
+            })
+            .catch(error => showError('Failed to delete user'));
+        }
+        
+        function refresh() {
+            Promise.all([loadStats(), loadUsers()])
+                .catch(error => showError('Failed to refresh data'));
+        }
+        
+        // Initialize
+        document.getElementById('refreshBtn').addEventListener('click', refresh);
+        
+        checkAdminAccess()
+            .then(() => refresh())
+            .catch(error => {
+                showError('Access denied - admin privileges required');
+                setTimeout(() => window.location.href = '/', 2000);
+            });
+    </script>
+</body>
+</html>

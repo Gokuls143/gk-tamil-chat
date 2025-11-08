@@ -1,6 +1,12 @@
 package com.example.demo.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users", indexes = @Index(columnList = "email", name = "ux_users_email"))
@@ -29,6 +35,19 @@ public class User {
     
     @Column(columnDefinition = "LONGTEXT")
     private String profilePicture;
+    
+    // Admin role fields
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isAdmin = false;
+    
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE") 
+    private Boolean isMuted = false;
+    
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isBanned = false;
+    
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isSuperAdmin = false;
 
     // getters & setters
     public Long getId() { return this.id; }
@@ -60,4 +79,16 @@ public class User {
     
     public String getProfilePicture() { return this.profilePicture; }
     public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
+    
+    public Boolean getIsAdmin() { return this.isAdmin != null ? this.isAdmin : false; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
+    
+    public Boolean getIsMuted() { return this.isMuted != null ? this.isMuted : false; }
+    public void setIsMuted(Boolean isMuted) { this.isMuted = isMuted; }
+    
+    public Boolean getIsBanned() { return this.isBanned != null ? this.isBanned : false; }
+    public void setIsBanned(Boolean isBanned) { this.isBanned = isBanned; }
+    
+    public Boolean getIsSuperAdmin() { return this.isSuperAdmin != null ? this.isSuperAdmin : false; }
+    public void setIsSuperAdmin(Boolean isSuperAdmin) { this.isSuperAdmin = isSuperAdmin; }
 }
