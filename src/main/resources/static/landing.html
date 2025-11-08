@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>Community Chat</title>
   <link rel="stylesheet" href="/style.css" />
   <style>
@@ -99,27 +99,46 @@
       .brand svg{width:16px;height:16px}
       .brand-title{font-size:.95rem;display:none}
       .header-actions{gap:8px}
-      .users-toggle-btn{display:flex;font-size:.8rem;padding:6px 10px}
+      .users-toggle-btn{display:flex;font-size:.8rem;padding:8px 12px;min-height:40px;touch-action:manipulation}
       .users-toggle-btn svg{width:14px;height:14px}
-      .profile-btn{width:36px;height:36px;font-size:.9rem}
-      .sidebar{position:absolute;right:0;top:0;bottom:0;width:260px;transform:translateX(0);transition:transform 0.3s ease;z-index:100;box-shadow:-4px 0 20px rgba(0,0,0,0.5)}
+      .profile-btn{width:36px;height:36px;font-size:.9rem;touch-action:manipulation}
+      .sidebar{position:absolute;right:0;top:0;bottom:0;width:280px;transform:translateX(0);transition:transform 0.3s ease;z-index:100;box-shadow:-4px 0 20px rgba(0,0,0,0.5)}
       .sidebar.collapsed{transform:translateX(100%)}
       .chat-section{border-right:none}
-      .compose{padding:10px 12px;gap:6px;min-height:56px}
-      .compose input{padding:10px 12px;font-size:.9rem}
-      .compose button{padding:10px 16px;font-size:.9rem}
-      .msg{max-width:85%}
-      .dropdown{right:-10px}
+      .compose{padding:12px;gap:8px;min-height:60px}
+      .compose input{padding:12px;font-size:16px;border-radius:12px;-webkit-appearance:none;appearance:none} /* Prevents zoom on iOS */
+      .compose button{padding:12px 18px;font-size:.9rem;min-height:44px;touch-action:manipulation}
+      .msg{max-width:85%;font-size:.9rem;padding:10px 12px}
+      .dropdown{right:-10px;min-width:220px}
+      .user-item{padding:8px 12px;min-height:48px;touch-action:manipulation}
+      .user-item .user-avatar{width:32px;height:32px}
+      .messages{padding:8px 12px;scroll-behavior:smooth}
+      /* Improve scrolling on mobile */
+      .messages{-webkit-overflow-scrolling:touch}
+      .users-container{-webkit-overflow-scrolling:touch}
     }
     
     /* Small Mobile */
     @media (max-width:480px){
-      .brand a{font-size:.8rem}
-      .sidebar{width:240px}
-      .user-item{padding:6px 10px}
-      .user-item .user-avatar{width:28px;height:28px;font-size:.8rem}
+      .brand a{font-size:.75rem}
+      .sidebar{width:260px}
+      .user-item{padding:6px 10px;min-height:44px}
+      .user-item .user-avatar{width:30px;height:30px;font-size:.8rem}
       .user-item .name{font-size:.85rem}
       .user-item .user-status{font-size:.7rem}
+      .compose{padding:10px;min-height:56px}
+      .compose input{padding:10px 12px;font-size:16px}
+      .compose button{padding:10px 14px;font-size:.85rem;min-height:40px}
+      .users-toggle-btn{padding:6px 10px;font-size:.75rem;min-height:36px}
+      .profile-btn{width:32px;height:32px;font-size:.8rem}
+      .msg{font-size:.85rem;padding:8px 10px}
+    }
+
+    /* Very small screens */
+    @media (max-width: 360px) {
+      .sidebar{width:240px}
+      .compose{padding:8px}
+      .users-toggle-btn{padding:6px 8px}
     }
     
     /* Landscape Mobile */
@@ -127,6 +146,15 @@
       header{min-height:48px;padding:8px 12px}
       .compose{min-height:48px;padding:8px 12px}
       .messages{padding:8px 12px}
+      .user-item{min-height:40px}
+    }
+
+    /* Touch improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .user-item:active{background:rgba(255,255,255,0.08)}
+      .compose button:active{transform:scale(0.95)}
+      .users-toggle-btn:active{transform:scale(0.95)}
+      .profile-btn:active{transform:scale(0.95)}
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

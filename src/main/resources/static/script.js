@@ -1,4 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Mobile optimization: Add mobile-specific classes and behaviors
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (isMobile || isTouch) {
+        document.body.classList.add('touch-device');
+        
+        // Prevent zoom on input focus for iOS
+        const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], input[type="number"]');
+        inputs.forEach(input => {
+            if (parseFloat(window.getComputedStyle(input).fontSize) < 16) {
+                input.style.fontSize = '16px';
+            }
+        });
+        
+        // Improve scroll behavior on mobile
+        document.addEventListener('touchstart', function() {}, {passive: true});
+        document.addEventListener('touchmove', function() {}, {passive: true});
+    }
+
     const form = document.getElementById('loginForm');
     const registerBtn = document.getElementById('registerBtn');
 

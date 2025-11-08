@@ -3,11 +3,13 @@
 body {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(135deg, #00b4db, #0083b0);
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .container {
@@ -45,6 +47,7 @@ input {
   border-radius: 8px;
   font-size: 15px;
   background-color: #f9f9f9;
+  box-sizing: border-box;
 }
 
 .btn{
@@ -83,7 +86,6 @@ input {
   opacity: 0.9;
 }
 
-
 .text-link {
   text-align: center;
   font-size: 14px;
@@ -98,4 +100,83 @@ input {
 
 .text-link a:hover {
   text-decoration: underline;
+}
+
+/* Touch device specific styles */
+.touch-device .btn, .touch-device .btn-primary {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-device input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+  
+  .container {
+    max-width: 100%;
+  }
+  
+  .form-card {
+    padding: 25px 20px;
+    border-radius: 8px;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  input {
+    padding: 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    margin-bottom: 15px;
+  }
+  
+  .btn, .btn-primary {
+    padding: 14px;
+    font-size: 16px;
+  }
+  
+  label {
+    font-size: 15px;
+  }
+  
+  .text-link {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+  
+  .form-card {
+    padding: 20px 15px;
+  }
+  
+  h2 {
+    font-size: 1.3rem;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    align-items: flex-start;
+    padding: 10px;
+  }
+  
+  .form-card {
+    margin-top: 20px;
+  }
 }

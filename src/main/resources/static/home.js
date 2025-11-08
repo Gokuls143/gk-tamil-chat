@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Session monitoring - check if user got forcefully logged out
+  let sessionCheckInterval;
+  
+  function startSessionMonitoring() {
+    console.log('Starting session monitoring');
+    sessionCheckInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/session/me', { 
+          credentials: 'same-origin',
+          cache: 'no-store' 
+        });
+        
+        if (!response.ok) {
+          console.log('Session expired or invalid - redirecting to login');
+          clearInterval(sessionCheckInterval);
+          
+          // Show message and redirect
+          alert('Your session has expired or another user has logged in. You will be redirected to the login page.');
+          window.location.href = '/';
+        }
+      } catch (error) {
+        console.log('Session check failed:', error);
+        // Network error - keep checking
+      }
+    }, 5000); // Check every 5 seconds
+  }
+  
+  // Start monitoring only if user appears to be on a protected page
+  if (window.location.pathname.includes('profile.html') || 
+      window.location.pathname.includes('chat.html')) {
+    startSessionMonitoring();
+  }
+  
   const openLogin = document.getElementById('openLogin');
   const openRegister = document.getElementById('openRegister');
   const openGuest = document.getElementById('openGuest');

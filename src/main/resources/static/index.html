@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
   <title>Home | GK Tamilchat</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -52,6 +52,56 @@
     .close-btn{position:absolute;right:14px;top:14px;background:transparent;border:none;color:#111;font-size:20px;cursor:pointer}
     .password-group{position:relative}
     .icon-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;padding:6px}
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 1024px) {
+      .page-wrap{padding:24px}
+      .hero-card{flex-direction:column;gap:24px;padding:28px}
+      .hero-right{width:100%;max-width:500px}
+    }
+
+    @media (max-width: 768px) {
+      .page-wrap{padding:16px}
+      .hero-card{padding:20px;gap:20px;border-radius:16px}
+      .hero-left h1{font-size:18px}
+      .hero-left .muted{font-size:0.9rem}
+      .hero-left p{font-size:0.95rem}
+      .cta-row{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+      .btn{padding:14px;font-size:16px;justify-content:center}
+      .modal{max-width:90vw}
+      .form-card{padding:20px;margin:0 10px}
+      .form-card h2{font-size:1.3rem}
+      input[type="text"],input[type="email"],input[type="password"],input[type="number"],select{
+        padding:14px;font-size:16px; /* Prevents zoom on iOS */
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page-wrap{padding:12px}
+      .hero-card{padding:16px;gap:16px;border-radius:12px}
+      .logo{gap:8px !important}
+      .logo svg{width:40px;height:40px}
+      .hero-left h1{font-size:16px}
+      .hero-left .muted{font-size:0.85rem;margin-top:4px}
+      .hero-left p{font-size:0.9rem;margin-top:14px}
+      .cta-row{margin-top:14px}
+      .btn{padding:12px;font-size:15px}
+      .form-card{padding:16px;margin:0 5px}
+      .form-card h2{font-size:1.2rem}
+      .close-btn{right:10px;top:10px}
+    }
+
+    /* Landscape mobile */
+    @media (max-height: 600px) and (orientation: landscape) {
+      .page-wrap{align-items:flex-start;padding:16px}
+      .hero-card{margin-top:20px}
+    }
+
+    /* Very small screens */
+    @media (max-width: 360px) {
+      .hero-card{padding:12px}
+      .form-card{padding:12px}
+    }
   </style>
 </head>
 <body>

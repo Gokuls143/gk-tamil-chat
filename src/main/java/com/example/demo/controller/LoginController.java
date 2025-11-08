@@ -102,33 +102,46 @@ public class LoginController {
         if (ok) {
             String username = existingUser.getUsername();
             
-            // Check if this user already has an active session
+            // Check if there's already a DIFFERENT user in this session
+            Object currentSessionUser = session.getAttribute("username");
+            if (currentSessionUser != null && !username.equals(currentSessionUser)) {
+                log.info("UNIVERSAL LOGOUT: Different user ({}) detected in session. Switching to: {}", 
+                         currentSessionUser, username);
+                
+                // Clean up old user's session completely
+                this.sessionService.removeUserSession(currentSessionUser.toString());
+                this.sessionService.removeSession(session.getId());
+                
+                // FORCE invalidate session - this will log out ALL tabs
+                try {
+                    session.invalidate();
+                    log.info("Session invalidated - ALL tabs will need to login again");
+                } catch (Exception e) {
+                    log.warn("Session already invalidated: {}", e.getMessage());
+                }
+                
+                // Create completely new session
+                session = request.getSession(true);
+                log.info("New session created: {} for user: {}", session.getId(), username);
+            }
+            
+            // Check if this user was logged in somewhere else and clean up
             if (this.sessionService.hasActiveSession(username)) {
                 String activeSessionId = this.sessionService.getActiveSessionId(username);
-                log.info("User {} already has active session {}. Current session: {}", 
+                log.info("User {} had previous session {}. Replacing with new session: {}", 
                         username, activeSessionId, session.getId());
-                // Remove the old session mapping
                 this.sessionService.removeUserSession(username);
             }
             
-            // Check if current session has a different user
-            Object currentSessionUser = session.getAttribute("username");
-            if (currentSessionUser != null && !username.equals(currentSessionUser)) {
-                log.info("Different user ({}) logged in current session. Switching to: {}", 
-                         currentSessionUser, username);
-                // Remove old user's session mapping
-                this.sessionService.removeUserSession(currentSessionUser.toString());
-                // Invalidate and create new session
-                session.invalidate();
-                session = request.getSession(true);
-            }
-            
-            // Register new session for user
+            // Register new session for this user
             this.sessionService.registerUserSession(username, session);
             
             try {
                 session.setAttribute("username", username);
-            } catch (Exception ignore) {}
+                log.info("SUCCESS: User {} logged in with session: {}", username, session.getId());
+            } catch (Exception e) {
+                log.error("Failed to set session attribute: {}", e.getMessage());
+            }
             
             Map<String, String> response = new HashMap<>();
             response.put("message", "Login successful");
