@@ -480,8 +480,36 @@
       const wrap = document.createElement('div');
       const me = (currentUser && msg && msg.sender && msg.sender.toLowerCase() === currentUser.toLowerCase());
       wrap.className = 'msg' + (me ? ' me' : '');
-      const ts = (msg.timestamp ? new Date(msg.timestamp) : new Date());
-      const timeText = ts.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      
+      // Improved timestamp handling
+      let ts;
+      if (msg.timestamp) {
+        // Handle different timestamp formats from backend
+        if (typeof msg.timestamp === 'string') {
+          // If it's a string, ensure it's properly parsed as local time
+          // LocalDateTime from backend comes without timezone, treat as local time
+          const timestampStr = msg.timestamp.includes('T') ? msg.timestamp : msg.timestamp + 'T00:00:00';
+          ts = new Date(timestampStr);
+        } else {
+          ts = new Date(msg.timestamp);
+        }
+        
+        // Validate the date
+        if (isNaN(ts.getTime())) {
+          console.warn('Invalid timestamp:', msg.timestamp);
+          ts = new Date();
+        }
+      } else {
+        ts = new Date();
+      }
+      
+      // Format time consistently
+      const timeText = ts.toLocaleTimeString([], {
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true  // Show AM/PM for clarity
+      });
+      
       wrap.innerHTML = '<div class="meta">' + (msg.sender || 'unknown') + ' • ' + timeText + '</div>' +
                       '<div class="body"></div>';
       

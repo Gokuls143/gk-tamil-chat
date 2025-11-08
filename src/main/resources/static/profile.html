@@ -272,9 +272,17 @@
       })
       .catch(err => {
         console.error('Error loading profile:', err);
-        showAlert('Failed to load profile: ' + err.message, 'error');
-        if(err.message.includes('Not authenticated')){
-          setTimeout(()=>{ window.location.href = '/index.html'; }, 2000);
+        
+        // More specific error handling
+        if (err.message.includes('Not authenticated')) {
+          showAlert('Authentication required. Redirecting to login...', 'error');
+          setTimeout(() => { window.location.href = '/'; }, 2000);
+        } else if (err.message.includes('Failed to fetch')) {
+          showAlert('Network error. Please check your connection and try again.', 'error');
+          // Don't redirect on network errors - let user retry
+        } else {
+          showAlert('Failed to load profile: ' + err.message, 'error');
+          // Don't automatically redirect on other errors
         }
       });
     }
@@ -390,43 +398,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function(){
-      // Session monitoring - check if user got forcefully logged out
-      const sessionCheckInterval = setInterval(async () => {
-        try {
-          const response = await fetch('/api/session/me', { 
-            credentials: 'same-origin',
-            cache: 'no-store' 
-          });
-          
-          if (!response.ok) {
-            console.log('Session expired or invalid - redirecting to login');
-            clearInterval(sessionCheckInterval);
-            
-            // Show message and redirect
-            alert('Your session has expired. You will be redirected to the login page.');
-            window.location.href = '/';
-            return;
-          }
-          
-          const username = await response.text();
-          
-          // Check if the current user changed - but be more careful about comparison
-          if (currentUser && username && currentUser.toLowerCase() !== username.toLowerCase()) {
-            console.log('Different user logged in - redirecting. Current:', currentUser, 'Session:', username);
-            clearInterval(sessionCheckInterval);
-            alert('Another user has logged in. You will be redirected to the login page.');
-            window.location.href = '/';
-          } else if (currentUser && username) {
-            // Update currentUser to match server response (for case consistency)
-            currentUser = username;
-          }
-        } catch (error) {
-          console.log('Session check failed:', error);
-          // Network error - keep checking silently
-        }
-      }, 5000); // Check every 5 seconds (reduced frequency)
-      
-      // Initialize user - prefer server-side resolution
+      // Initialize user - prefer server-side resolution with better error handling
       resolveUserFromServer().then(username => {
         currentUser = username;
         if(currentUser){
@@ -434,10 +406,18 @@
           initial.textContent = currentUser.charAt(0).toUpperCase();
           loadProfile();
         } else {
-          // No valid session
-          alert('Please login to access your profile.');
-          window.location.href = '/';
+          // No valid session - but give user a chance to login
+          showAlert('No active session found. Please login to access your profile.', 'error');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 3000);
         }
+      }).catch(error => {
+        console.error('Failed to resolve user:', error);
+        showAlert('Unable to verify session. Please login again.', 'error');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
       });
 
       document.getElementById('status').addEventListener('input', ()=>updateCharCount('status', 'statusCount'));

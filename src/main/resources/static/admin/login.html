@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Admin Portal - GK Tamil Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Inter, Arial;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .admin-login-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 450px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .admin-logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .admin-logo h1 {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .admin-logo p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 0.9rem;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e1e5e9;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: #fff;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      margin-top: 10px;
+    }
+    
+    .login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .login-btn:disabled {
+      opacity: 0.6;
+      transform: none;
+      cursor: not-allowed;
+    }
+    
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    
+    .alert.show {
+      display: block;
+    }
+    
+    .alert.error {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    
+    .alert.success {
+      background: #dcfce7;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+    
+    .back-link {
+      text-align: center;
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid #e1e5e9;
+    }
+    
+    .back-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+    }
+    
+    .back-link a:hover {
+      color: #764ba2;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+      }
+      
+      .admin-login-container {
+        padding: 30px 25px;
+        border-radius: 16px;
+      }
+      
+      .admin-logo h1 {
+        font-size: 1.7rem;
+      }
+      
+      .form-input {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+      
+      .login-btn {
+        padding: 14px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-login-container">
+    <div class="admin-logo">
+      <h1>🛡️ Admin Portal</h1>
+      <p>Secure Access for Administrators</p>
+    </div>
+    
+    <div id="alertBox" class="alert"></div>
+    
+    <form id="adminLoginForm">
+      <div class="form-group">
+        <label class="form-label" for="username">Username or Email</label>
+        <input type="text" id="username" name="username" class="form-input" 
+               placeholder="Enter your admin username or email" required autocomplete="username">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-input" 
+               placeholder="Enter your password" required autocomplete="current-password">
+      </div>
+      
+      <button type="submit" class="login-btn" id="loginBtn">
+        Access Admin Portal
+      </button>
+    </form>
+    
+    <div class="back-link">
+      <a href="/">← Back to Main Site</a>
+    </div>
+  </div>
+
+  <script>
+    function showAlert(message, type) {
+      const alertBox = document.getElementById('alertBox');
+      alertBox.textContent = message;
+      alertBox.className = `alert ${type} show`;
+      
+      setTimeout(() => {
+        alertBox.classList.remove('show');
+      }, 5000);
+    }
+    
+    function setLoading(isLoading) {
+      const loginBtn = document.getElementById('loginBtn');
+      const form = document.getElementById('adminLoginForm');
+      
+      if (isLoading) {
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Authenticating...';
+        form.style.opacity = '0.7';
+      } else {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Access Admin Portal';
+        form.style.opacity = '1';
+      }
+    }
+    
+    // Check if already logged in as admin
+    async function checkExistingAdminSession() {
+      try {
+        console.log('Checking existing admin session...');
+        const response = await fetch('/api/admin/session/check', {
+          credentials: 'same-origin',
+          cache: 'no-cache'
+        });
+        
+        console.log('Session check status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Session data:', data);
+          
+          if (data.authenticated === true && data.username) {
+            console.log('Already logged in as admin:', data.username);
+            // Already logged in as admin
+            window.location.href = '/admin/dashboard.html';
+            return true;
+          }
+        }
+      } catch (error) {
+        console.log('No existing admin session:', error.message);
+      }
+      return false;
+    }
+    
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      
+      if (!username || !password) {
+        showAlert('Please enter both username and password', 'error');
+        return;
+      }
+      
+      setLoading(true);
+      
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ username, password })
+        });
+        
+        console.log('Login response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Login response data:', data);
+          
+          if (data.success) {
+            showAlert('Login successful! Redirecting...', 'success');
+            setTimeout(() => {
+              window.location.href = '/admin/dashboard.html';
+            }, 1500);
+          } else {
+            showAlert(data.message || 'Login failed', 'error');
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+          showAlert(errorData.message || 'Invalid admin credentials', 'error');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showAlert('Network error. Please try again.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkExistingAdminSession();
+    });
+  </script>
+</body>
+</html>

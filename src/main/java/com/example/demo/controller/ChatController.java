@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -134,8 +136,14 @@ public class ChatController {
         Message toSave = new Message();
         toSave.setSender(sender.isEmpty() ? "anonymous" : sender);
         toSave.setContent(content);
+        // Use system default timezone to ensure consistent timestamp handling
         toSave.setTimestamp(LocalDateTime.now());
         Message saved = this.messageRepository.save(toSave);
+        
+        // Log for debugging timestamp issues
+        log.debug("Saving message with timestamp: {} (Local time zone: {})", 
+                 saved.getTimestamp(), ZoneId.systemDefault());
+        
         return saved;
     }
 

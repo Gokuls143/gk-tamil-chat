@@ -1,1 +1,1 @@
-web: java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75 -Dserver.port=$PORT -jar /app/app.jar
+web: java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75 -Dserver.port=$PORT -Dspring.profiles.active=prod -jar /app/app.jar

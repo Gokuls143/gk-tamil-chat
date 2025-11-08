@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,5 +20,14 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 	@Transactional
 	@Query("DELETE FROM Message m WHERE m.sender = :sender")
 	void deleteBySender(@Param("sender") String sender);
+	
+	// Admin methods
+	long countByTimestampBetween(LocalDateTime start, LocalDateTime end);
+	
+	List<Message> findAllByOrderByTimestampDesc();
+	
+	List<Message> findBySenderOrderByTimestampDesc(String sender);
+	
+	long countByTimestampAfter(LocalDateTime timestamp);
 }
 

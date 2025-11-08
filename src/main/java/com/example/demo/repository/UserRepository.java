@@ -18,4 +18,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsBannedTrue();
     List<User> findByIsAdminTrue();
     List<User> findByIsSuperAdminTrue();
+    
+    // Additional admin methods
+    List<User> findByIsBannedTrue();
+    List<User> findByIsMutedTrue();
+    List<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email);
 }

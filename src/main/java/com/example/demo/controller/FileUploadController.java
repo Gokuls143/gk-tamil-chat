@@ -49,8 +49,8 @@ public class FileUploadController {
         "image/gif"
     );
     
-    // Upload directory
-    private static final String UPLOAD_DIR = "uploads/";
+    // Upload directory - Use system temp for Railway compatibility
+    private static final String UPLOAD_DIR = System.getProperty("java.io.tmpdir") + "uploads" + System.getProperty("file.separator");
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(
@@ -89,10 +89,17 @@ public class FileUploadController {
                     .body("File too large. Max sizes: Images/GIFs: 8MB, Audio: 10MB");
             }
             
-            // Create upload directory if it doesn't exist
+            // Create upload directory if it doesn't exist - Railway-safe
             Path uploadPath = Paths.get(UPLOAD_DIR);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+            try {
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                    System.out.println("Created upload directory: " + uploadPath.toAbsolutePath());
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to create upload directory: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to initialize file storage");
             }
             
             // Generate unique filename

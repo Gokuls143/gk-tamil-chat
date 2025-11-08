@@ -38,4 +38,12 @@ public class UserTrackingService {
     public Set<String> getConnectedUsernames() {
         return Collections.unmodifiableSet(this.connectedUsers);
     }
+    
+    public long getOnlineUserCount() {
+        return this.connectedUsers.size();
+    }
+    
+    public boolean isUserOnline(String username) {
+        return this.connectedUsers.contains(username);
+    }
 }

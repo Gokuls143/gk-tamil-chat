@@ -40,12 +40,26 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/api/messages/recent"),
                     new AntPathRequestMatcher("/online-users"),
                     new AntPathRequestMatcher("/app/**"),  // STOMP application destination
-                    new AntPathRequestMatcher("/topic/**") // STOMP broker destination
+                    new AntPathRequestMatcher("/topic/**"), // STOMP broker destination
+                    // Admin static files - allow access to admin UI files
+                    new AntPathRequestMatcher("/admin/**"),
+                    // Admin authentication endpoints - must be accessible to login
+                    new AntPathRequestMatcher("/api/admin/login"),
+                    new AntPathRequestMatcher("/api/admin/logout"),
+                    new AntPathRequestMatcher("/api/admin/session/check")
                 ).permitAll()
+                // Admin API endpoints - require authentication but handled by controller
+                .requestMatchers(
+                    new AntPathRequestMatcher("/api/admin/**")
+                ).authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable);
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session
+                .maximumSessions(10) // Allow multiple admin sessions
+                .maxSessionsPreventsLogin(false) // Don't prevent new logins
+            );
 
         return http.build();
     }
