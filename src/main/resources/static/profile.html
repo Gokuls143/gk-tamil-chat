@@ -183,6 +183,24 @@
       return null;
     }
 
+    async function resolveUserFromServer(){
+      try {
+        const response = await fetch('/api/session/me', { 
+          credentials: 'same-origin',
+          cache: 'no-store' 
+        });
+        
+        if (response.ok) {
+          return await response.text();
+        }
+      } catch (error) {
+        console.log('Failed to get user from server:', error);
+      }
+      
+      // Fallback to client-side resolution
+      return resolveUser();
+    }
+
     function showAlert(message, type){
       const alertBox = document.getElementById('alertBox');
       alertBox.textContent = message;
@@ -375,7 +393,7 @@
       // Session monitoring - check if user got forcefully logged out
       const sessionCheckInterval = setInterval(async () => {
         try {
-          const response = await fetch('/session/me', { 
+          const response = await fetch('/api/session/me', { 
             credentials: 'same-origin',
             cache: 'no-store' 
           });
@@ -385,33 +403,42 @@
             clearInterval(sessionCheckInterval);
             
             // Show message and redirect
-            alert('Your session has expired or another user has logged in. You will be redirected to the login page.');
+            alert('Your session has expired. You will be redirected to the login page.');
             window.location.href = '/';
             return;
           }
           
           const username = await response.text();
           
-          // Check if the current user changed
-          if (currentUser && currentUser !== username) {
-            console.log('Different user logged in - redirecting');
+          // Check if the current user changed - but be more careful about comparison
+          if (currentUser && username && currentUser.toLowerCase() !== username.toLowerCase()) {
+            console.log('Different user logged in - redirecting. Current:', currentUser, 'Session:', username);
             clearInterval(sessionCheckInterval);
             alert('Another user has logged in. You will be redirected to the login page.');
             window.location.href = '/';
+          } else if (currentUser && username) {
+            // Update currentUser to match server response (for case consistency)
+            currentUser = username;
           }
         } catch (error) {
           console.log('Session check failed:', error);
-          // Network error - keep checking
+          // Network error - keep checking silently
         }
-      }, 3000); // Check every 3 seconds
+      }, 5000); // Check every 5 seconds (reduced frequency)
       
-      currentUser = resolveUser();
-      if(currentUser){
-        const initial = document.getElementById('profileInitial');
-        initial.textContent = currentUser.charAt(0).toUpperCase();
-      }
-
-      loadProfile();
+      // Initialize user - prefer server-side resolution
+      resolveUserFromServer().then(username => {
+        currentUser = username;
+        if(currentUser){
+          const initial = document.getElementById('profileInitial');
+          initial.textContent = currentUser.charAt(0).toUpperCase();
+          loadProfile();
+        } else {
+          // No valid session
+          alert('Please login to access your profile.');
+          window.location.href = '/';
+        }
+      });
 
       document.getElementById('status').addEventListener('input', ()=>updateCharCount('status', 'statusCount'));
       document.getElementById('description').addEventListener('input', ()=>updateCharCount('description', 'descCount'));
