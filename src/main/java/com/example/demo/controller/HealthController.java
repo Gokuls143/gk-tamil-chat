@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 public class HealthController {
@@ -16,8 +17,8 @@ public class HealthController {
     private JdbcTemplate jdbcTemplate;
     
     @GetMapping("/")
-    public String root() {
-        return "redirect:/index.html";
+    public RedirectView root() {
+        return new RedirectView("/index.html");
     }
     
     @GetMapping("/health")
