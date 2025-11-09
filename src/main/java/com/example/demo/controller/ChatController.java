@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -16,12 +15,14 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.example.demo.dto.MessageDTO;
 import com.example.demo.model.Message;
 import com.example.demo.model.User;
 import com.example.demo.repository.MessageRepository;
@@ -124,7 +125,7 @@ public class ChatController {
     // STOMP endpoint: client sends to /app/sendMessage with a Message payload
     @MessageMapping("/sendMessage")
     @SendTo("/topic/messages")
-    public Message sendMessage(Message incoming) {
+    public MessageDTO sendMessage(Message incoming) {
         if (incoming == null) return null;
         // basic normalization: trim content and sender
         String content = incoming.getContent() == null ? null : incoming.getContent().trim();
@@ -145,16 +146,65 @@ public class ChatController {
         log.debug("Saving message with timestamp: {} (IST zone: {})", 
                  saved.getTimestamp(), istZone);
         
-        return saved;
+        // Find user for avatar information
+        User user = this.userRepository.findByUsername(saved.getSender());
+        
+        return new MessageDTO(saved, user);
     }
 
     // REST: recent chat history for initial page load
     @GetMapping("/api/messages/recent")
     @ResponseBody
-    public List<Message> recentMessages(@RequestParam(name = "limit", required = false) Integer limit) {
+    public List<MessageDTO> recentMessages(@RequestParam(name = "limit", required = false) Integer limit) {
         List<Message> latest = this.messageRepository.findTop50ByOrderByTimestampDesc();
         Collections.reverse(latest); // oldest first for UI
-        if (limit == null || limit <= 0 || limit >= latest.size()) return latest;
-        return latest.subList(latest.size() - limit, latest.size());
+        
+        // Apply limit if specified
+        List<Message> messagesToReturn;
+        if (limit == null || limit <= 0 || limit >= latest.size()) {
+            messagesToReturn = latest;
+        } else {
+            messagesToReturn = latest.subList(latest.size() - limit, latest.size());
+        }
+        
+        // Convert to MessageDTO with avatar information
+        return messagesToReturn.stream()
+                .map(message -> {
+                    User user = this.userRepository.findByUsername(message.getSender());
+                    return new MessageDTO(message, user);
+                })
+                .collect(Collectors.toList());
+    }
+
+    // REST: Get user profile (read-only)
+    @GetMapping("/api/user/profile/{username}")
+    @ResponseBody
+    public Map<String, Object> getUserProfile(@PathVariable String username) {
+        Map<String, Object> response = new HashMap<>();
+        
+        if (username == null || username.trim().isEmpty()) {
+            response.put("error", "Username is required");
+            return response;
+        }
+        
+        User user = this.userRepository.findByUsername(username.trim());
+        if (user == null) {
+            response.put("error", "User not found");
+            return response;
+        }
+        
+        // Return safe user information (no password, admin flags, etc.)
+        Map<String, Object> profile = new HashMap<>();
+        profile.put("username", user.getUsername());
+        profile.put("email", user.getEmail());
+        profile.put("gender", user.getGender());
+        profile.put("age", user.getAge());
+        profile.put("status", user.getStatus());
+        profile.put("description", user.getDescription());
+        profile.put("story", user.getStory());
+        profile.put("profilePicture", user.getProfilePicture());
+        
+        response.put("profile", profile);
+        return response;
     }
 }

@@ -37,6 +37,9 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/profile.html"),
                     new AntPathRequestMatcher("/api/user/online"),
                     new AntPathRequestMatcher("/api/user/offline"),
+                    new AntPathRequestMatcher("/api/user/profile/**"), // Profile viewing endpoint
+                    new AntPathRequestMatcher("/api/upload"), // File upload endpoint
+                    new AntPathRequestMatcher("/uploads/**"), // Static file serving
                     new AntPathRequestMatcher("/api/messages/recent"),
                     new AntPathRequestMatcher("/online-users"),
                     new AntPathRequestMatcher("/app/**"),  // STOMP application destination

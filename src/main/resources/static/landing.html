@@ -91,6 +91,29 @@
     .msg .body{line-height:1.4;word-break:break-word}
     .msg.me{background:linear-gradient(180deg, rgba(79,70,229,0.18), rgba(6,182,212,0.12));align-self:flex-end}
     
+    /* Message header with avatar */
+    .msg-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.1);flex-shrink:0}
+    .username-clickable{color:#06b6d4;cursor:pointer;font-weight:600;transition:color 0.2s ease;border-radius:4px;padding:2px 4px;margin:-2px -4px}
+    .username-clickable:hover{color:#0891b2;background:rgba(6,182,212,0.1);transform:translateY(-1px)}
+    .username-clickable:active{transform:translateY(0)}
+
+    /* Profile Modal Styles */
+    .profile-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
+    .profile-modal.show{display:flex}
+    .profile-content{background:#1e293b;border-radius:12px;width:100%;max-width:500px;max-height:90vh;overflow:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)}
+    .profile-header{padding:24px;border-bottom:1px solid rgba(255,255,255,0.1);text-align:center}
+    .profile-avatar{width:120px;height:120px;border-radius:50%;margin:0 auto 16px;background:#334155;color:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:bold;border:4px solid #475569}
+    .profile-name{font-size:1.5rem;font-weight:bold;color:#f1f5f9;margin-bottom:8px}
+    .profile-email{color:#94a3b8;font-size:0.9rem}
+    .profile-body{padding:24px}
+    .profile-field{margin-bottom:20px}
+    .profile-label{color:#94a3b8;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+    .profile-value{color:#f1f5f9;font-size:0.95rem;line-height:1.5;background:#0f172a;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1)}
+    .profile-value.empty{color:#64748b;font-style:italic}
+    .profile-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s}
+    .profile-close:hover{background:rgba(255,255,255,0.1);color:#f1f5f9}
+    
     /* Compose Area (Footer) */
     .compose{display:flex;gap:8px;padding:12px 16px;background:#0f172a;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;min-height:60px}
     .compose input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;outline:none;min-width:0}
@@ -212,6 +235,14 @@
       .dropdown{right:-10px;min-width:220px}
       .user-item{padding:8px 12px;min-height:48px;touch-action:manipulation}
       .user-item .user-avatar{width:32px;height:32px}
+      
+      /* Profile Modal Mobile */
+      .profile-modal{padding:10px}
+      .profile-content{max-width:none;max-height:95vh}
+      .profile-header{padding:20px 16px}
+      .profile-avatar{width:100px;height:100px;font-size:2rem}
+      .profile-body{padding:16px}
+      .profile-field{margin-bottom:16px}
     }
     
     /* Small Mobile */
@@ -350,12 +381,22 @@
     }
 
     function connect(){
+      setStatus('Connecting...');
+      console.log('Attempting to connect to WebSocket...');
+      
       const socket = new SockJS('/chat');
       stompClient = Stomp.over(socket);
       stompClient.debug = function(str) { console.log('STOMP: ' + str); }; // enable debug logs
+      
       stompClient.connect({}, function(frame){
         console.log('Connected to WebSocket:', frame);
-        setStatus('Connected');
+        setStatus('Connected ✅');
+        
+        // Clear any reconnection attempts
+        if (window.reconnectInterval) {
+          clearInterval(window.reconnectInterval);
+          window.reconnectInterval = null;
+        }
         
         // Immediately notify server of current user to track online status
         if(currentUser){
@@ -390,22 +431,242 @@
         }).catch((err)=>{ console.error('Failed to load history:', err); });
       }, function(err){
         console.error('WebSocket connection error:', err);
-        setStatus('Disconnected: ' + (err.message || 'Connection failed'));
+        setStatus('Disconnected ❌ - Will retry');
+        
+        // Auto-reconnect after 3 seconds
+        setTimeout(() => {
+          if (!stompClient || !stompClient.connected) {
+            console.log('Attempting to reconnect...');
+            connect();
+          }
+        }, 3000);
       });
     }
 
     function setStatus(text){
-      const el=document.getElementById('status'); if(el) el.textContent=text||'';
+      const el=document.getElementById('status'); 
+      if(el) {
+        el.textContent=text||'';
+        el.style.color = text.includes('Connected') ? '#4CAF50' : 
+                         text.includes('Disconnected') ? '#f44336' : 
+                         text.includes('Connecting') ? '#ff9800' : '#333';
+      }
     }
 
     function sendMessage(){
       const input = document.getElementById('chatInput');
       const content = (input.value||'').trim();
-      if(!content || !stompClient || !stompClient.connected) return;
+      
+      // Debug logging
+      console.log('SendMessage called:', {
+        content: content,
+        stompClient: !!stompClient,
+        connected: stompClient ? stompClient.connected : false,
+        currentUser: currentUser
+      });
+      
+      if(!content) {
+        console.log('No content to send');
+        return;
+      }
+      
+      if(!stompClient) {
+        console.error('StompClient is null - reconnecting...');
+        connect();
+        return;
+      }
+      
+      if(!stompClient.connected) {
+        console.error('StompClient not connected - reconnecting...');
+        connect();
+        return;
+      }
+      
       const payload = { sender: currentUser || 'anonymous', content };
-      stompClient.send('/app/sendMessage', {}, JSON.stringify(payload));
-      input.value='';
+      console.log('Sending message via WebSocket:', payload);
+      
+      try {
+        stompClient.send('/app/sendMessage', {}, JSON.stringify(payload));
+        input.value='';
+        console.log('Message sent successfully via WebSocket');
+      } catch (error) {
+        console.error('Failed to send message via WebSocket:', error);
+        // Fallback: send via REST API
+        sendMessageViaRest(payload);
+      }
     }
+    
+    function sendMessageViaRest(payload) {
+      console.log('Sending message via REST API as fallback:', payload);
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Message sent via REST API:', data);
+        // Manually add message to UI since WebSocket isn't working
+        appendMessage(data, false);
+        scrollToBottom();
+        document.getElementById('chatInput').value = '';
+      })
+      .catch(error => {
+        console.error('Failed to send message via REST API:', error);
+        alert('Failed to send message. Please check your connection.');
+      });
+    }
+
+    function tagUser(username) {
+      const input = document.getElementById('chatInput');
+      if (!input || !username) return;
+      
+      const currentValue = input.value;
+      const tag = `@${username} `;
+      
+      // If input is empty, just add the tag
+      if (!currentValue.trim()) {
+        input.value = tag;
+      } else {
+        // If input has content, add tag at the end with a space
+        input.value = currentValue + (currentValue.endsWith(' ') ? '' : ' ') + tag;
+      }
+      
+      // Focus the input and place cursor at the end
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      
+      // Scroll input into view if needed
+      input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      console.log(`Tagged user: ${username}`);
+    }
+
+    function viewUserProfile(username) {
+      if (!username || username.trim() === '') {
+        console.log('No username provided for profile view');
+        return;
+      }
+      
+      console.log(`Loading profile for: ${username}`);
+      
+      // Show loading state
+      const modal = document.getElementById('profileModal');
+      const profileName = document.getElementById('profileName');
+      const profileAvatar = document.getElementById('profileAvatar');
+      const profileEmail = document.getElementById('profileEmail');
+      const profileGender = document.getElementById('profileGender');
+      const profileAge = document.getElementById('profileAge');
+      const profileStatus = document.getElementById('profileStatus');
+      const profileDescription = document.getElementById('profileDescription');
+      const profileStory = document.getElementById('profileStory');
+      
+      if (profileName) profileName.textContent = 'Loading...';
+      if (modal) modal.classList.add('show');
+      
+      // Fetch user profile
+      fetch(`/api/user/profile/${encodeURIComponent(username)}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Profile data received:', data);
+          
+          if (data.error) {
+            alert(data.error);
+            closeProfileModal();
+            return;
+          }
+          
+          const profile = data.profile;
+          
+          // Set profile information
+          if (profileName) profileName.textContent = profile.username || 'Unknown User';
+          if (profileEmail) profileEmail.textContent = profile.email || 'No email provided';
+          
+          // Set avatar
+          if (profileAvatar) {
+            if (profile.profilePicture && profile.profilePicture.trim() !== '') {
+              profileAvatar.innerHTML = `<img src="${profile.profilePicture}" alt="${profile.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            } else {
+              // Generate default avatar
+              const firstLetter = (profile.username && profile.username.length > 0) ? profile.username[0].toUpperCase() : '?';
+              profileAvatar.innerHTML = firstLetter;
+            }
+          }
+          
+          // Set profile fields with fallback for empty values
+          if (profileGender) {
+            if (profile.gender && profile.gender.trim() !== '') {
+              profileGender.textContent = profile.gender;
+              profileGender.classList.remove('empty');
+            } else {
+              profileGender.textContent = 'Not specified';
+              profileGender.classList.add('empty');
+            }
+          }
+          
+          if (profileAge) {
+            if (profile.age) {
+              profileAge.textContent = `${profile.age} years old`;
+              profileAge.classList.remove('empty');
+            } else {
+              profileAge.textContent = 'Not specified';
+              profileAge.classList.add('empty');
+            }
+          }
+          
+          if (profileStatus) {
+            if (profile.status && profile.status.trim() !== '') {
+              profileStatus.textContent = profile.status;
+              profileStatus.classList.remove('empty');
+            } else {
+              profileStatus.textContent = 'No status';
+              profileStatus.classList.add('empty');
+            }
+          }
+          
+          if (profileDescription) {
+            if (profile.description && profile.description.trim() !== '') {
+              profileDescription.textContent = profile.description;
+              profileDescription.classList.remove('empty');
+            } else {
+              profileDescription.textContent = 'No description provided';
+              profileDescription.classList.add('empty');
+            }
+          }
+          
+          if (profileStory) {
+            if (profile.story && profile.story.trim() !== '') {
+              profileStory.textContent = profile.story;
+              profileStory.classList.remove('empty');
+            } else {
+              profileStory.textContent = 'No story shared';
+              profileStory.classList.add('empty');
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Failed to load profile:', error);
+          alert('Failed to load user profile. Please try again.');
+          closeProfileModal();
+        });
+    }
+
+    function closeProfileModal() {
+      const modal = document.getElementById('profileModal');
+      if (modal) {
+        modal.classList.remove('show');
+      }
+    }
+
+    // Close modal when clicking outside of it
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'profileModal') {
+        closeProfileModal();
+      }
+    });
 
     function processMessageContent(content) {
       if (!content) return { hasMedia: false, html: '' };
@@ -510,8 +771,18 @@
         hour12: true  // Show AM/PM for clarity
       });
       
-      wrap.innerHTML = '<div class="meta">' + (msg.sender || 'unknown') + ' • ' + timeText + '</div>' +
-                      '<div class="body"></div>';
+      // Create avatar and clickable username
+      const senderName = msg.sender || 'unknown';
+      const avatarUrl = msg.senderAvatar || `https://ui-avatars.com/api/?name=${senderName.charAt(0)}&background=random&size=32&rounded=true`;
+      const clickableUsername = `<span class="username-clickable" onclick="viewUserProfile('${senderName}')" ondblclick="tagUser('${senderName}'); event.stopPropagation();" title="Click to view profile • Double-click to tag @${senderName}">${senderName}</span>`;
+      
+      wrap.innerHTML = `
+        <div class="msg-header">
+          <img src="${avatarUrl}" alt="${senderName}" class="user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${senderName.charAt(0)}&background=6c757d&color=fff&size=32&rounded=true'">
+          <div class="meta">${clickableUsername} • ${timeText}</div>
+        </div>
+        <div class="body"></div>
+      `;
       
       const bodyDiv = wrap.querySelector('.body');
       
@@ -561,9 +832,14 @@
     }
 
     function loadOnlineUsers(){
+      console.log('Loading online users...');
       fetch('/api/users/all',{cache:'no-store'})
         .then(r=>r.json())
         .then(data=>{
+          console.log('All users API response:', data);
+          console.log('Users array:', data.users);
+          console.log('Number of users:', data.users ? data.users.length : 'No users array');
+          
           const onlineContainer = document.getElementById('onlineUsersList');
           const offlineContainer = document.getElementById('offlineUsersList');
           const headerCount = document.getElementById('userCount');
@@ -576,6 +852,7 @@
           offlineContainer.innerHTML = '';
           
           if(!data || !data.users || data.users.length===0){
+            console.log('No users data found');
             onlineContainer.innerHTML = '<div class="empty-state">No users online</div>';
             offlineContainer.innerHTML = '<div class="empty-state">No users registered</div>';
             if(headerCount) headerCount.textContent = '0 online';
@@ -605,6 +882,14 @@
               const isCurrentUser = user.username && user.username.toLowerCase() === (currentUser||'').toLowerCase();
               const item = document.createElement('div');
               item.className = 'user-item';
+              
+              // Make item clickable for profile viewing (except for current user)
+              if (!isCurrentUser && !user.isGuest) {
+                item.style.cursor = 'pointer';
+                item.title = `Click to view ${user.username}'s profile`;
+                item.onclick = () => viewUserProfile(user.username);
+              }
+              
               const guestLabel = user.isGuest ? ' 👤' : '';
               const nameText = isCurrentUser ? user.username + ' (You)' + guestLabel : user.username + guestLabel;
               
@@ -654,6 +939,14 @@
               const isCurrentUser = user.username && user.username.toLowerCase() === (currentUser||'').toLowerCase();
               const item = document.createElement('div');
               item.className = 'user-item';
+              
+              // Make item clickable for profile viewing (except for current user)
+              if (!isCurrentUser && !user.isGuest) {
+                item.style.cursor = 'pointer';
+                item.title = `Click to view ${user.username}'s profile`;
+                item.onclick = () => viewUserProfile(user.username);
+              }
+              
               const guestLabel = user.isGuest ? ' 👤' : '';
               const nameText = isCurrentUser ? user.username + ' (You)' + guestLabel : user.username + guestLabel;
               
@@ -1140,5 +1433,40 @@
     </div>
   </div>
   </div>
+
+  <!-- Profile Modal -->
+  <div id="profileModal" class="profile-modal">
+    <div class="profile-content">
+      <button class="profile-close" onclick="closeProfileModal()">&times;</button>
+      <div class="profile-header">
+        <div id="profileAvatar" class="profile-avatar"></div>
+        <div id="profileName" class="profile-name"></div>
+        <div id="profileEmail" class="profile-email"></div>
+      </div>
+      <div class="profile-body">
+        <div class="profile-field">
+          <div class="profile-label">Gender</div>
+          <div id="profileGender" class="profile-value"></div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Age</div>
+          <div id="profileAge" class="profile-value"></div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Status</div>
+          <div id="profileStatus" class="profile-value"></div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Description</div>
+          <div id="profileDescription" class="profile-value"></div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Story</div>
+          <div id="profileStory" class="profile-value"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
