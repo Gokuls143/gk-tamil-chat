@@ -85,6 +85,9 @@
     
     /* Chat Messages */
     .status{padding:8px 12px;background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);font-size:.85rem;color:#94a3b8;flex-shrink:0}
+    .load-more-btn{background:linear-gradient(135deg,#334155,#475569);color:#e2e8f0;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 16px;margin:8px 16px 0;cursor:pointer;font-size:0.85rem;transition:all 0.2s;text-align:center}
+    .load-more-btn:hover{background:linear-gradient(135deg,#475569,#64748b);transform:translateY(-1px)}
+    .load-more-btn:active{transform:translateY(0)}
     .messages{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;min-height:0}
     .msg{padding:8px 12px;border-radius:10px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);max-width:70%;word-wrap:break-word}
     .msg .meta{font-size:.8rem;color:#94a3b8;margin-bottom:4px}
@@ -477,13 +480,20 @@
             appendMessage({ sender: 'system', content: messageOutput.body, timestamp: new Date().toISOString() }, false);
           }
         });
-        // load history - Reduced for Railway performance (20 instead of 50)
-        fetch('/api/messages/recent?limit=20',{cache:'no-store'}).then(r=>r.json()).then(list=>{
+        // load history - Highly optimized for Railway performance (10 messages for fastest load)
+        fetch('/api/messages/recent?limit=10',{cache:'no-store'}).then(r=>r.json()).then(list=>{
           document.getElementById('messages').innerHTML='';
+          currentMessageOffset = list ? list.length : 0;
           (list||[]).forEach(msg => appendMessage(msg, true)); // true = from history
           scrollToBottom();
+          
+          // Show load more button if we loaded the maximum number of messages
+          if(list && list.length >= 10) {
+            document.getElementById('loadMoreBtn').style.display = 'block';
+          }
+          
           // Mark initial load complete after a short delay
-          setTimeout(() => { isInitialLoad = false; }, 1000);
+          setTimeout(() => { isInitialLoad = false; }, 500);
         }).catch((err)=>{ console.error('Failed to load history:', err); });
       }, function(err){
         console.error('WebSocket connection error:', err);
@@ -778,8 +788,8 @@
       return false;
     }
 
-    function appendMessage(msg, isFromHistory){
-      const list = document.getElementById('messages');
+    function appendMessage(msg, isFromHistory, container){
+      const list = container || document.getElementById('messages');
       if(!list) return;
       const wrap = document.createElement('div');
       const me = (currentUser && msg && msg.sender && msg.sender.toLowerCase() === currentUser.toLowerCase());
@@ -878,6 +888,57 @@
     function scrollToBottom(){
       const list = document.getElementById('messages');
       list && (list.scrollTop = list.scrollHeight);
+    }
+
+    let currentMessageOffset = 10; // Track how many messages we've loaded
+    
+    function loadMoreMessages(){
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
+      loadMoreBtn.style.display = 'none'; // Hide button while loading
+      loadMoreBtn.textContent = '⏳ Loading...';
+      
+      fetch(`/api/messages/recent?limit=${currentMessageOffset + 15}`,{cache:'no-store'})
+        .then(r=>r.json())
+        .then(list=>{
+          if(list && list.length > currentMessageOffset) {
+            // Get only the new messages (older ones)
+            const newMessages = list.slice(0, list.length - currentMessageOffset);
+            const messagesContainer = document.getElementById('messages');
+            
+            // Save scroll position
+            const scrollHeight = messagesContainer.scrollHeight;
+            
+            // Create temp container for new messages
+            const tempContainer = document.createElement('div');
+            newMessages.forEach(msg => {
+              appendMessage(msg, true, tempContainer);
+            });
+            
+            // Prepend new messages to the beginning
+            while(tempContainer.firstChild) {
+              messagesContainer.insertBefore(tempContainer.firstChild, messagesContainer.firstChild);
+            }
+            
+            // Restore scroll position
+            messagesContainer.scrollTop = messagesContainer.scrollHeight - scrollHeight;
+            
+            currentMessageOffset = list.length;
+            
+            // Show button again if there might be more messages
+            if(list.length >= currentMessageOffset) {
+              loadMoreBtn.style.display = 'block';
+              loadMoreBtn.textContent = '⬆️ Load More Messages';
+            }
+          } else {
+            // No more messages
+            loadMoreBtn.textContent = '📝 No more messages';
+            setTimeout(() => loadMoreBtn.style.display = 'none', 2000);
+          }
+        }).catch((err)=>{ 
+          console.error('Failed to load more messages:', err);
+          loadMoreBtn.style.display = 'block';
+          loadMoreBtn.textContent = '⬆️ Load More Messages';
+        });
     }
 
     function loadOnlineUsers(){
@@ -1410,10 +1471,6 @@
   <div class="chat-container">
   <header>
     <div class="brand">
-      <a href="/profile.html">
-        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-        <span>Profile</span>
-      </a>
       <span class="brand-title">GK Tamil Chat</span>
     </div>
     <div class="header-actions">
@@ -1452,6 +1509,9 @@
   <div class="main-container">
     <div class="chat-section">
       <div id="status" class="status">Connecting…</div>
+      <button id="loadMoreBtn" class="load-more-btn" style="display:none;" onclick="loadMoreMessages()">
+        ⬆️ Load More Messages
+      </button>
       <div id="messages" class="messages" aria-live="polite"></div>
       <div id="attachmentPreview" class="attachment-preview">
         <div class="file-info" id="fileInfo"></div>

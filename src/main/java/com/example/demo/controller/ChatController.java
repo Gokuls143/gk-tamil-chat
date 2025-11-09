@@ -220,40 +220,43 @@ public class ChatController {
         return new MessageDTO(saved, user);
     }
 
-    // REST: recent chat history for initial page load - OPTIMIZED for Railway
+    // REST: recent chat history for initial page load - HIGHLY OPTIMIZED for Railway
     @GetMapping("/api/messages/recent")
     @ResponseBody
     public List<MessageDTO> recentMessages(@RequestParam(name = "limit", required = false) Integer limit) {
-        // Start with recent 20 messages by default, max 50 to prevent slow loads
-        int messageLimit = (limit != null && limit > 0) ? Math.min(limit, 50) : 20;
+        // Default to 10 messages for fastest loading, max 30 to prevent slow loads
+        int messageLimit = (limit != null && limit > 0) ? Math.min(limit, 30) : 10;
         
-        List<Message> latest = this.messageRepository.findTop50ByOrderByTimestampDesc();
-        Collections.reverse(latest); // oldest first for UI
-        
-        // Apply limit - take only the most recent messages
-        List<Message> messagesToReturn;
-        if (latest.size() <= messageLimit) {
-            messagesToReturn = latest;
-        } else {
-            messagesToReturn = latest.subList(latest.size() - messageLimit, latest.size());
+        try {
+            // Use optimized query to get only the messages we need
+            List<Message> latest = this.messageRepository.findRecentMessagesLimited(messageLimit);
+            Collections.reverse(latest); // oldest first for UI
+            
+            if (latest.isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            // OPTIMIZATION: Pre-load all users in a single query to avoid N+1 problem
+            Set<String> senderNames = latest.stream()
+                    .map(Message::getSender)
+                    .collect(Collectors.toSet());
+            
+            List<User> users = this.userRepository.findByUsernameIn(new ArrayList<>(senderNames));
+            Map<String, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getUsername, user -> user));
+            
+            // Convert to MessageDTO with cached user information
+            return latest.stream()
+                    .map(message -> {
+                        User user = userMap.get(message.getSender());
+                        return new MessageDTO(message, user);
+                    })
+                    .collect(Collectors.toList());
+                    
+        } catch (Exception e) {
+            log.error("Error loading recent messages: {}", e.getMessage());
+            return new ArrayList<>();
         }
-        
-        // OPTIMIZATION: Pre-load all users in a single query to avoid N+1 problem
-        Set<String> senderNames = messagesToReturn.stream()
-                .map(Message::getSender)
-                .collect(Collectors.toSet());
-        
-        List<User> users = this.userRepository.findByUsernameIn(new ArrayList<>(senderNames));
-        Map<String, User> userMap = users.stream()
-                .collect(Collectors.toMap(User::getUsername, user -> user));
-        
-        // Convert to MessageDTO with cached user information
-        return messagesToReturn.stream()
-                .map(message -> {
-                    User user = userMap.get(message.getSender());
-                    return new MessageDTO(message, user);
-                })
-                .collect(Collectors.toList());
     }
 
     // REST: Get user profile (read-only)

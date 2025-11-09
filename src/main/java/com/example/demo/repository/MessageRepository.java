@@ -15,6 +15,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 	// fetch recent messages for chat history
 	List<Message> findTop50ByOrderByTimestampDesc();
 	
+	// Optimized method to fetch limited recent messages in proper order
+	@Query("SELECT m FROM Message m ORDER BY m.timestamp DESC LIMIT :limit")
+	List<Message> findRecentMessagesLimited(@Param("limit") int limit);
+	
 	// delete messages by sender (for admin clear chat function)
 	@Modifying
 	@Transactional
