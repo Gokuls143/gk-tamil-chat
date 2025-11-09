@@ -416,7 +416,8 @@ public class AdminAuthController {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
+            String errorMsg = "Password update failed: " + e.getMessage();
+            System.err.println("❌ " + errorMsg);
             response.put("success", false);
             response.put("message", "Error updating password: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
