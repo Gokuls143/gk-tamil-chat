@@ -1,0 +1,42 @@
+services:
+  # Web Service - Your Spring Boot Application
+  - type: web
+    name: gk-tamil-chat
+    env: java
+    plan: starter
+    buildCommand: ./gradlew build -x test
+    startCommand: java -Dserver.port=$PORT -jar build/libs/demo-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx512m -Xms256m"
+    autoDeploy: true
+    branch: main
+    
+  # Database Service - MySQL
+  - type: pserv
+    name: gk-tamil-chat-db
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.mysql
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+      - key: MYSQL_DATABASE
+        value: gktamil_chat
+      - key: MYSQL_USER
+        value: gktamil_user
+      - key: MYSQL_PASSWORD
+        generateValue: true
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+
+databases:
+  # Alternative: Use Render's managed MySQL (if available) or PostgreSQL
+  - name: gk-tamil-chat-postgres
+    databaseName: gktamil_chat
+    user: gktamil_user
+    plan: starter
