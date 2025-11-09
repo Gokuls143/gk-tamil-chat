@@ -33,6 +33,7 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/api/forgot-username"),
                     new AntPathRequestMatcher("/api/users/exists"),
                     new AntPathRequestMatcher("/api/users/all"),
+                    new AntPathRequestMatcher("/api/debug/users"), // Debug endpoint
                     new AntPathRequestMatcher("/api/profile"),
                     new AntPathRequestMatcher("/api/profile/**"),
                     new AntPathRequestMatcher("/profile.html"),
