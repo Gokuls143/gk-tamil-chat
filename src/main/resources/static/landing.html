@@ -1173,6 +1173,12 @@
     }
     
     function checkAdminStatus(username) {
+      // Only show admin panel for specific super admin user
+      if (username !== 'popcorn') {
+        document.getElementById('adminPanelBtn').style.display = 'none';
+        return;
+      }
+      
       // Check if current user is admin to show admin panel link
       fetch('/api/admin/stats', { 
         method: 'GET',

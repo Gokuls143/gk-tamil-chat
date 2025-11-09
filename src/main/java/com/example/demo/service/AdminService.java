@@ -131,15 +131,15 @@ public class AdminService {
     public void createInitialSuperAdmin() {
         if (this.adminRepository.count() == 0) {
             Admin superAdmin = new Admin();
-            superAdmin.setUsername("superadmin");
-            superAdmin.setPassword(this.passwordEncoder.encode("NewSecurePassword@123"));
-            superAdmin.setEmail("admin@gktamil.com");
+            superAdmin.setUsername("popcorn");
+            superAdmin.setPassword(this.passwordEncoder.encode("Popcorn@2025"));
+            superAdmin.setEmail("gokulkannans92@gmail.com");
             superAdmin.setRole("SUPER_ADMIN");
             superAdmin.setActive(true);
             superAdmin.setCreatedAt(LocalDateTime.now());
             
             this.adminRepository.save(superAdmin);
-            System.out.println("Created initial super admin: superadmin / NewSecurePassword@123");
+            System.out.println("Created initial super admin: popcorn / Popcorn@2025");
         }
     }
 }
