@@ -16,8 +16,8 @@ public class HealthController {
     private JdbcTemplate jdbcTemplate;
     
     @GetMapping("/")
-    public ResponseEntity<String> root() {
-        return ResponseEntity.ok("Tamil Chat Application is running! Visit /index.html for the chat interface.");
+    public String root() {
+        return "redirect:/index.html";
     }
     
     @GetMapping("/health")
