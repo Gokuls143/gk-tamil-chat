@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
@@ -16,11 +18,13 @@ public class MessageService {
     private MessageRepository messageRepository;
     
     /**
-     * Get message count for today
+     * Get message count for today (IST timezone)
      */
     public long getTodayMessageCount() {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+        ZoneId istZone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = ZonedDateTime.now(istZone).toLocalDate();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
         return this.messageRepository.countByTimestampBetween(startOfDay, endOfDay);
     }
     
@@ -51,10 +55,11 @@ public class MessageService {
     }
     
     /**
-     * Get message count for last 7 days
+     * Get message count for last 7 days (IST timezone)
      */
     public long getWeeklyMessageCount() {
-        LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+        ZoneId istZone = ZoneId.of("Asia/Kolkata");
+        LocalDateTime weekAgo = ZonedDateTime.now(istZone).toLocalDateTime().minusDays(7);
         return this.messageRepository.countByTimestampAfter(weekAgo);
     }
     
