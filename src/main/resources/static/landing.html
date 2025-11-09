@@ -152,6 +152,28 @@
     /* File input hidden */
     #fileInput{display:none}
     
+    /* Quote/Reply Functionality Styles */
+    .msg-actions{display:flex;gap:4px;margin-top:6px;opacity:0;transition:opacity 0.2s ease}
+    .msg:hover .msg-actions{opacity:1}
+    .reply-btn{background:rgba(79,70,229,0.1);border:1px solid rgba(79,70,229,0.2);color:#94a3b8;padding:4px 8px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:4px}
+    .reply-btn:hover{background:rgba(79,70,229,0.2);color:#e2e8f0;transform:scale(1.05)}
+    .reply-btn svg{width:12px;height:12px;fill:currentColor}
+    
+    /* Quoted Message Display */
+    .quoted-message{background:rgba(79,70,229,0.1);border-left:3px solid #4f46e5;padding:8px 12px;margin:4px 0 8px;border-radius:0 8px 8px 0;font-size:0.85rem}
+    .quoted-header{display:flex;align-items:center;gap:6px;margin-bottom:4px;color:#94a3b8;font-size:0.75rem}
+    .quoted-avatar{width:16px;height:16px;border-radius:50%;object-fit:cover}
+    .quoted-content{color:#e2e8f0;line-height:1.3;max-height:60px;overflow:hidden;word-wrap:break-word}
+    .quoted-content.collapsed{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-clamp:3}
+    
+    /* Reply Input Context */
+    .reply-context{background:rgba(79,70,229,0.1);border:1px solid rgba(79,70,229,0.2);border-radius:8px 8px 0 0;padding:8px 12px;margin:-1px -1px 0;display:none;align-items:center;gap:8px}
+    .reply-context.show{display:flex}
+    .reply-preview{flex:1;font-size:0.8rem;color:#94a3b8}
+    .reply-preview .replying-to{color:#4f46e5;font-weight:600}
+    .cancel-reply{background:none;border:none;color:#ef4444;cursor:pointer;padding:4px;font-size:0.75rem;border-radius:4px;transition:background 0.2s}
+    .cancel-reply:hover{background:rgba(239,68,68,0.1)}
+    
     /* Tablet Responsive (768px - 1300px) */
     @media (max-width:1300px){
       body{
@@ -542,11 +564,26 @@
         return;
       }
       
-      const payload = { sender: currentUser || 'anonymous', content };
+      const payload = { 
+        sender: currentUser || 'anonymous', 
+        content: content
+      };
+      
+      // Add quoted message information if replying
+      if (currentReplyTo) {
+        payload.quotedMessageId = currentReplyTo.id;
+        payload.quotedSender = currentReplyTo.username;
+        payload.quotedContent = currentReplyTo.content;
+      }
       
       try {
         stompClient.send('/app/sendMessage', {}, JSON.stringify(payload));
         input.value='';
+        
+        // Clear reply context after sending
+        if (currentReplyTo) {
+          cancelReply();
+        }
       } catch (error) {
         console.error('Failed to send message via WebSocket:', error);
         // Fallback: send via REST API
@@ -569,6 +606,11 @@
         appendMessage(data, false);
         scrollToBottom();
         document.getElementById('chatInput').value = '';
+        
+        // Clear reply context after sending
+        if (currentReplyTo) {
+          cancelReply();
+        }
       })
       .catch(error => {
         console.error('Failed to send message via REST API:', error);
@@ -717,6 +759,65 @@
       }
     }
 
+    // Quote/Reply functionality
+    let currentReplyTo = null;
+
+    function replyToMessage(messageId, username, content) {
+      currentReplyTo = {
+        id: messageId,
+        username: username,
+        content: content
+      };
+      
+      // Show reply context
+      const replyContext = document.getElementById('replyContext');
+      const replyToUser = document.getElementById('replyToUser');
+      const replyToContent = document.getElementById('replyToContent');
+      const chatInput = document.getElementById('chatInput');
+      
+      if (replyContext && replyToUser && replyToContent && chatInput) {
+        replyToUser.textContent = username;
+        replyToContent.textContent = content.length > 100 ? content.substring(0, 100) + '...' : content;
+        replyContext.classList.add('show');
+        
+        // Focus input and update placeholder
+        chatInput.placeholder = `Replying to ${username}...`;
+        chatInput.focus();
+      }
+    }
+
+    function cancelReply() {
+      currentReplyTo = null;
+      
+      const replyContext = document.getElementById('replyContext');
+      const chatInput = document.getElementById('chatInput');
+      
+      if (replyContext) {
+        replyContext.classList.remove('show');
+      }
+      
+      if (chatInput) {
+        chatInput.placeholder = 'Type a message and press Enter';
+      }
+    }
+    
+    function renderQuotedMessage(quotedMsg) {
+      if (!quotedMsg) return '';
+      
+      const avatarUrl = quotedMsg.senderAvatar || `https://ui-avatars.com/api/?name=${quotedMsg.sender?.charAt(0)}&background=6c757d&color=fff&size=16&rounded=true`;
+      
+      return `
+        <div class="quoted-message">
+          <div class="quoted-header">
+            <img src="${avatarUrl}" alt="${quotedMsg.sender}" class="quoted-avatar" 
+                 onerror="this.src='https://ui-avatars.com/api/?name=${quotedMsg.sender?.charAt(0)}&background=6c757d&color=fff&size=16&rounded=true'">
+            <span>${quotedMsg.sender}</span>
+          </div>
+          <div class="quoted-content collapsed">${quotedMsg.content}</div>
+        </div>
+      `;
+    }
+
     // Close modal when clicking outside of it
     document.addEventListener('click', function(e) {
       if (e.target && e.target.id === 'profileModal') {
@@ -841,16 +942,38 @@
           <div class="meta">${clickableUsername} • ${timeText}</div>
         </div>
         <div class="body"></div>
+        <div class="msg-actions">
+          <button class="reply-btn" onclick="replyToMessage(${msg.id}, '${senderName}', \`${(msg.content || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+            <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+            Reply
+          </button>
+        </div>
       `;
       
       const bodyDiv = wrap.querySelector('.body');
       
+      // Add quoted message if present
+      if (msg.quotedMessage) {
+        const quotedHtml = renderQuotedMessage(msg.quotedMessage);
+        bodyDiv.innerHTML = quotedHtml;
+      }
+      
       // Process message content for URLs and GIFs
       const processedContent = processMessageContent(msg.content || '');
       if (processedContent.hasMedia) {
-        bodyDiv.innerHTML = processedContent.html;
+        if (msg.quotedMessage) {
+          bodyDiv.innerHTML += processedContent.html;
+        } else {
+          bodyDiv.innerHTML = processedContent.html;
+        }
       } else {
-        bodyDiv.textContent = msg.content || '';
+        if (msg.quotedMessage) {
+          const contentDiv = document.createElement('div');
+          contentDiv.textContent = msg.content || '';
+          bodyDiv.appendChild(contentDiv);
+        } else {
+          bodyDiv.textContent = msg.content || '';
+        }
       }
       
       // Add attachment if present
@@ -1522,6 +1645,13 @@
       <div id="attachmentPreview" class="attachment-preview">
         <div class="file-info" id="fileInfo"></div>
         <button class="cancel-btn" id="cancelAttachment" title="Cancel attachment">✕</button>
+      </div>
+      <div id="replyContext" class="reply-context">
+        <div class="reply-preview">
+          <div class="replying-to">Replying to <span id="replyToUser"></span>:</div>
+          <div id="replyToContent" class="quoted-content"></div>
+        </div>
+        <button class="cancel-reply" onclick="cancelReply()" title="Cancel reply">✕</button>
       </div>
       <div class="compose">
         <button class="attach-btn" id="attachBtn" title="Add attachment">

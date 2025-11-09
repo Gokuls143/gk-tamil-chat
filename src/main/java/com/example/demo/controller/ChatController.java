@@ -205,6 +205,14 @@ public class ChatController {
         Message toSave = new Message();
         toSave.setSender(sender.isEmpty() ? "anonymous" : sender);
         toSave.setContent(content);
+        
+        // Handle quoted message information
+        if (incoming.getQuotedMessageId() != null) {
+            toSave.setQuotedMessageId(incoming.getQuotedMessageId());
+            toSave.setQuotedSender(incoming.getQuotedSender());
+            toSave.setQuotedContent(incoming.getQuotedContent());
+        }
+        
         // Use Indian Standard Time (IST) timezone for consistent timestamp handling
         ZoneId istZone = ZoneId.of("Asia/Kolkata");
         toSave.setTimestamp(ZonedDateTime.now(istZone).toLocalDateTime());

@@ -43,6 +43,16 @@ public class Message {
     @Column
     private Long attachmentSize; // File size in bytes
 
+    // Quote/Reply fields
+    @Column
+    private Long quotedMessageId; // ID of the message being quoted
+    
+    @Column
+    private String quotedSender; // Sender of the quoted message
+    
+    @Column(length = 1000)
+    private String quotedContent; // Content of the quoted message
+
     public Message() {}
 
     public Message(String sender, String content) {
@@ -75,4 +85,14 @@ public class Message {
     
     public Long getAttachmentSize() { return this.attachmentSize; }
     public void setAttachmentSize(Long attachmentSize) { this.attachmentSize = attachmentSize; }
+    
+    // Quote/Reply getters and setters
+    public Long getQuotedMessageId() { return this.quotedMessageId; }
+    public void setQuotedMessageId(Long quotedMessageId) { this.quotedMessageId = quotedMessageId; }
+    
+    public String getQuotedSender() { return this.quotedSender; }
+    public void setQuotedSender(String quotedSender) { this.quotedSender = quotedSender; }
+    
+    public String getQuotedContent() { return this.quotedContent; }
+    public void setQuotedContent(String quotedContent) { this.quotedContent = quotedContent; }
 }

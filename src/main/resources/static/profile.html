@@ -185,7 +185,7 @@
 
     async function resolveUserFromServer(){
       try {
-        const response = await fetch('/api/session/me', { 
+        const response = await fetch('/session/me', { 
           credentials: 'same-origin',
           cache: 'no-store' 
         });
