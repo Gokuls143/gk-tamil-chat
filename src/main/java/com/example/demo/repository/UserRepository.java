@@ -9,6 +9,7 @@ import com.example.demo.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUsernameIn(Set<String> usernames);
+    List<User> findByUsernameIn(List<String> usernames); // For performance optimization
     User findByUsername(String username);
     User findByEmail(String email);
     

@@ -54,8 +54,38 @@ public class FileUploadController {
         "image/gif"
     );
     
-    // Upload directory - Use system temp for Railway compatibility
-    private static final String UPLOAD_DIR = System.getProperty("java.io.tmpdir") + "uploads" + System.getProperty("file.separator");
+    // Upload directory - Railway optimized with persistent volume support
+    private static final String UPLOAD_DIR;
+    
+    static {
+        String railwayVolume = System.getenv("RAILWAY_VOLUME_MOUNT_PATH");
+        String tempDir = System.getProperty("java.io.tmpdir");
+        
+        if (railwayVolume != null) {
+            // Use Railway persistent volume if available
+            UPLOAD_DIR = railwayVolume + "/uploads" + System.getProperty("file.separator");
+            System.out.println("Using Railway persistent volume for uploads: " + railwayVolume);
+        } else {
+            // Fallback to system temp directory
+            UPLOAD_DIR = tempDir + "uploads" + System.getProperty("file.separator");
+            System.out.println("Using system temp directory for uploads");
+        }
+        
+        System.out.println("Configured upload directory: " + UPLOAD_DIR);
+        
+        // Ensure directory exists at startup
+        try {
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                System.out.println("Created upload directory: " + uploadPath.toAbsolutePath());
+            } else {
+                System.out.println("Upload directory already exists: " + uploadPath.toAbsolutePath());
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not create upload directory at startup: " + e.getMessage());
+        }
+    }
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(

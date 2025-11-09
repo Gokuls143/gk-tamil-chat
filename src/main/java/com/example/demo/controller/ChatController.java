@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -219,25 +220,37 @@ public class ChatController {
         return new MessageDTO(saved, user);
     }
 
-    // REST: recent chat history for initial page load
+    // REST: recent chat history for initial page load - OPTIMIZED for Railway
     @GetMapping("/api/messages/recent")
     @ResponseBody
     public List<MessageDTO> recentMessages(@RequestParam(name = "limit", required = false) Integer limit) {
+        // Start with recent 20 messages by default, max 50 to prevent slow loads
+        int messageLimit = (limit != null && limit > 0) ? Math.min(limit, 50) : 20;
+        
         List<Message> latest = this.messageRepository.findTop50ByOrderByTimestampDesc();
         Collections.reverse(latest); // oldest first for UI
         
-        // Apply limit if specified
+        // Apply limit - take only the most recent messages
         List<Message> messagesToReturn;
-        if (limit == null || limit <= 0 || limit >= latest.size()) {
+        if (latest.size() <= messageLimit) {
             messagesToReturn = latest;
         } else {
-            messagesToReturn = latest.subList(latest.size() - limit, latest.size());
+            messagesToReturn = latest.subList(latest.size() - messageLimit, latest.size());
         }
         
-        // Convert to MessageDTO with avatar information
+        // OPTIMIZATION: Pre-load all users in a single query to avoid N+1 problem
+        Set<String> senderNames = messagesToReturn.stream()
+                .map(Message::getSender)
+                .collect(Collectors.toSet());
+        
+        List<User> users = this.userRepository.findByUsernameIn(new ArrayList<>(senderNames));
+        Map<String, User> userMap = users.stream()
+                .collect(Collectors.toMap(User::getUsername, user -> user));
+        
+        // Convert to MessageDTO with cached user information
         return messagesToReturn.stream()
                 .map(message -> {
-                    User user = this.userRepository.findByUsername(message.getSender());
+                    User user = userMap.get(message.getSender());
                     return new MessageDTO(message, user);
                 })
                 .collect(Collectors.toList());
