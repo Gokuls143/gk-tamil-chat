@@ -25,6 +25,7 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/home.js"),
                     new AntPathRequestMatcher("/script.js"),
                     new AntPathRequestMatcher("/register.js"),
+                    new AntPathRequestMatcher("/sounds/**"), // Notification sounds
                     new AntPathRequestMatcher("/chat/**"), // websocket handshake endpoint and SockJS fallbacks
                     new AntPathRequestMatcher("/api/register"),
                     new AntPathRequestMatcher("/api/login"),

@@ -380,16 +380,73 @@
       }
     }
 
+    // Play custom MP3 notification for tag mentions
+    function playTagNotification(){
+      try{
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.volume = 0.8; // Slightly louder for important tag notifications
+        audio.play().then(() => {
+          console.log('Tag notification sound played');
+        }).catch(err => {
+          console.warn('Failed to play tag notification:', err);
+          // Fallback to default beep if MP3 fails
+          playNotificationSound();
+        });
+      }catch(e){
+        console.warn('Failed to create tag notification audio:', e);
+        // Fallback to default beep
+        playNotificationSound();
+      }
+    }
+
+    // Check if message contains a tag mention for current user
+    function isTaggedMessage(content, username){
+      if(!content || !username) return false;
+      
+      // Look for @username mentions (case-insensitive)
+      const mentions = content.match(/@\w+/g) || [];
+      return mentions.some(mention => 
+        mention.toLowerCase() === `@${username.toLowerCase()}`
+      );
+    }
+
+    // Test function to check WebSocket connectivity
+    function testWebSocketConnection(){
+      console.log('🔧 Testing WebSocket connection...');
+      console.log('🔧 StompClient exists:', !!stompClient);
+      console.log('🔧 StompClient connected:', stompClient ? stompClient.connected : 'N/A');
+      console.log('🔧 Current user:', currentUser);
+      
+      if(stompClient && stompClient.connected){
+        console.log('🔧 WebSocket appears to be connected. Sending test message...');
+        const testPayload = {
+          sender: currentUser || 'test-user',
+          content: 'Test message from debug function'
+        };
+        try {
+          stompClient.send('/app/sendMessage', {}, JSON.stringify(testPayload));
+          console.log('🔧 Test message sent successfully');
+        } catch(error) {
+          console.error('🔧 Failed to send test message:', error);
+        }
+      } else {
+        console.error('🔧 WebSocket not connected!');
+      }
+    }
+
+    // Make test function available globally for debugging
+    window.testWebSocket = testWebSocketConnection;
+
     function connect(){
       setStatus('Connecting...');
-      console.log('Attempting to connect to WebSocket...');
       
       const socket = new SockJS('/chat');
       stompClient = Stomp.over(socket);
-      stompClient.debug = function(str) { console.log('STOMP: ' + str); }; // enable debug logs
+      // Disable debug logs for better performance
+      stompClient.debug = null;
       
       stompClient.connect({}, function(frame){
-        console.log('Connected to WebSocket:', frame);
+        console.log('WebSocket connected');
         setStatus('Connected ✅');
         
         // Clear any reconnection attempts
@@ -405,8 +462,7 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({username: currentUser})
           }).then(()=>{
-            console.log('Notified server of online status');
-            loadOnlineUsers(); // Refresh the users list
+            loadOnlineUsers(); // Refresh the users list once
           }).catch(err=>console.error('Failed to notify online status:', err));
         }
         
@@ -416,8 +472,8 @@
             if(data && data.content){ 
               appendMessage(data, false); // false = not from history
             }
-          }catch{
-            // accept plain strings
+          }catch(parseError){
+            // Fallback for plain strings
             appendMessage({ sender: 'system', content: messageOutput.body, timestamp: new Date().toISOString() }, false);
           }
         });
@@ -457,16 +513,7 @@
       const input = document.getElementById('chatInput');
       const content = (input.value||'').trim();
       
-      // Debug logging
-      console.log('SendMessage called:', {
-        content: content,
-        stompClient: !!stompClient,
-        connected: stompClient ? stompClient.connected : false,
-        currentUser: currentUser
-      });
-      
       if(!content) {
-        console.log('No content to send');
         return;
       }
       
@@ -483,12 +530,10 @@
       }
       
       const payload = { sender: currentUser || 'anonymous', content };
-      console.log('Sending message via WebSocket:', payload);
       
       try {
         stompClient.send('/app/sendMessage', {}, JSON.stringify(payload));
         input.value='';
-        console.log('Message sent successfully via WebSocket');
       } catch (error) {
         console.error('Failed to send message via WebSocket:', error);
         // Fallback: send via REST API
@@ -497,7 +542,6 @@
     }
     
     function sendMessageViaRest(payload) {
-      console.log('Sending message via REST API as fallback:', payload);
       fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -508,7 +552,6 @@
       })
       .then(response => response.json())
       .then(data => {
-        console.log('Message sent via REST API:', data);
         // Manually add message to UI since WebSocket isn't working
         appendMessage(data, false);
         scrollToBottom();
@@ -774,7 +817,7 @@
       // Create avatar and clickable username
       const senderName = msg.sender || 'unknown';
       const avatarUrl = msg.senderAvatar || `https://ui-avatars.com/api/?name=${senderName.charAt(0)}&background=random&size=32&rounded=true`;
-      const clickableUsername = `<span class="username-clickable" onclick="viewUserProfile('${senderName}')" ondblclick="tagUser('${senderName}'); event.stopPropagation();" title="Click to view profile • Double-click to tag @${senderName}">${senderName}</span>`;
+      const clickableUsername = `<span class="username-clickable" onclick="tagUser('${senderName}')" oncontextmenu="viewUserProfile('${senderName}'); event.preventDefault();" title="Click to tag @${senderName} • Right-click to view profile">${senderName}</span>`;
       
       wrap.innerHTML = `
         <div class="msg-header">
@@ -822,7 +865,13 @@
       
       // Play notification sound for new messages from others (not from history, not from self)
       if(!isFromHistory && !isInitialLoad && !me && msg.sender !== 'system'){
-        playNotificationSound();
+        if(isTaggedMessage(msg.content, currentUser)){
+          // Play custom MP3 for tag mentions
+          playTagNotification();
+        } else {
+          // Play default beep for regular messages
+          playNotificationSound();
+        }
       }
     }
 
@@ -832,14 +881,9 @@
     }
 
     function loadOnlineUsers(){
-      console.log('Loading online users...');
       fetch('/api/users/all',{cache:'no-store'})
         .then(r=>r.json())
         .then(data=>{
-          console.log('All users API response:', data);
-          console.log('Users array:', data.users);
-          console.log('Number of users:', data.users ? data.users.length : 'No users array');
-          
           const onlineContainer = document.getElementById('onlineUsersList');
           const offlineContainer = document.getElementById('offlineUsersList');
           const headerCount = document.getElementById('userCount');
@@ -852,7 +896,6 @@
           offlineContainer.innerHTML = '';
           
           if(!data || !data.users || data.users.length===0){
-            console.log('No users data found');
             onlineContainer.innerHTML = '<div class="empty-state">No users online</div>';
             offlineContainer.innerHTML = '<div class="empty-state">No users registered</div>';
             if(headerCount) headerCount.textContent = '0 online';
@@ -988,7 +1031,23 @@
             });
           }
         })
-        .catch(err=>console.error('Failed to load users:', err));
+        .catch(err=>{
+          console.error('Failed to load users:', err);
+          
+          // Show error state in UI
+          const onlineContainer = document.getElementById('onlineUsersList');
+          const offlineContainer = document.getElementById('offlineUsersList');
+          const headerCount = document.getElementById('userCount');
+          
+          if(onlineContainer) onlineContainer.innerHTML = '<div class="empty-state">⚠️ Failed to load users</div>';
+          if(offlineContainer) offlineContainer.innerHTML = '<div class="empty-state">Check connection</div>';
+          if(headerCount) headerCount.textContent = 'Connection error';
+          
+          // Retry after 10 seconds instead of 5 for less aggressive retry
+          setTimeout(() => {
+            loadOnlineUsers();
+          }, 10000);
+        });
     }
 
     function logout(){
@@ -1305,9 +1364,9 @@
       // Also initialize on any click
       document.body.addEventListener('click', initAudioContext, { once: true });
       
-      // Load online users initially and refresh every 10 seconds
+      // Load online users initially and refresh every 30 seconds (reduced frequency)
       loadOnlineUsers();
-      setInterval(loadOnlineUsers, 10000);
+      setInterval(loadOnlineUsers, 30000);
       
       // Profile dropdown toggle
       document.getElementById('profileBtn').addEventListener('click', function(e){
