@@ -90,7 +90,8 @@ public class RoleController {
     public ResponseEntity<Map<String, Object>> getUserRole(@PathVariable String username) {
         try {
             UserRole role = permissionService.getUserRole(username);
-            User user = roleService.findUserByUsername(username);
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
             Map<String, Object> response = new HashMap<>();
             response.put("username", username);
