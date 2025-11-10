@@ -211,36 +211,76 @@ public class ChatController {
     @SendTo("/topic/messages")
     public MessageDTO sendMessage(Message incoming) {
         if (incoming == null) return null;
+
         // basic normalization: trim content and sender
         String content = incoming.getContent() == null ? null : incoming.getContent().trim();
         String sender = incoming.getSender() == null ? "anonymous" : incoming.getSender().trim();
+
         if (content == null || content.isEmpty()) {
             // ignore empty messages
             return null;
         }
+
+        // === PERMISSION VALIDATION ===
+
+        // Validate message content based on user permissions
+        PermissionService.MessageValidationResult validation = permissionService.validateMessageContent(sender, content);
+        if (!validation.isApproved()) {
+            log.warn("Message rejected for user {}: {}", sender, validation.getRejectionReason());
+            // Create a system message to inform about the restriction
+            Message systemMessage = new Message();
+            systemMessage.setSender("system");
+            systemMessage.setContent(String.format("Message from %s was not sent: %s",
+                sender, validation.getRejectionReason()));
+            ZoneId istZone = ZoneId.of("Asia/Kolkata");
+            systemMessage.setTimestamp(ZonedDateTime.now(istZone).toLocalDateTime());
+            Message savedSystem = this.messageRepository.save(systemMessage);
+            return new MessageDTO(savedSystem, null);
+        }
+
+        // === MESSAGE PROCESSING ===
+
         Message toSave = new Message();
         toSave.setSender(sender.isEmpty() ? "anonymous" : sender);
         toSave.setContent(content);
-        
+
         // Handle quoted message information
         if (incoming.getQuotedMessageId() != null) {
             toSave.setQuotedMessageId(incoming.getQuotedMessageId());
             toSave.setQuotedSender(incoming.getQuotedSender());
             toSave.setQuotedContent(incoming.getQuotedContent());
         }
-        
+
         // Use Indian Standard Time (IST) timezone for consistent timestamp handling
         ZoneId istZone = ZoneId.of("Asia/Kolkata");
         toSave.setTimestamp(ZonedDateTime.now(istZone).toLocalDateTime());
         Message saved = this.messageRepository.save(toSave);
-        
+
+        // === USER ACTIVITY TRACKING ===
+
+        try {
+            // Update user activity and message count
+            User user = this.userRepository.findByUsername(saved.getSender());
+            if (user != null) {
+                // Increment message count and update activity
+                user.incrementMessageCount();
+                user.updateLastActivity();
+                this.userRepository.save(user);
+
+                log.debug("Updated user activity for {}: {} messages, last activity: {}",
+                         user.getUsername(), user.getMessageCount(), user.getLastActivityAt());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to update user activity for {}: {}", sender, e.getMessage());
+        }
+
         // Log for debugging timestamp issues
-        log.debug("Saving message with timestamp: {} (IST zone: {})", 
+        log.debug("Saving message with timestamp: {} (IST zone: {})",
                  saved.getTimestamp(), istZone);
-        
+
         // Find user for avatar information
         User user = this.userRepository.findByUsername(saved.getSender());
-        
+
         return new MessageDTO(saved, user);
     }
 
