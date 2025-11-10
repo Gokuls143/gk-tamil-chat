@@ -92,6 +92,17 @@ public class ChatController {
                     userMap.put("isGuest", false);
                     userMap.put("profilePicture", user.getProfilePicture());
                     userMap.put("status", user.getStatus());
+
+                    // Add role information
+                    userMap.put("role", user.getUserRole().name());
+                    userMap.put("roleDisplayName", user.getUserRole().getDisplayName());
+                    userMap.put("roleLevel", user.getUserRole().getLevel());
+                    userMap.put("roleColor", user.getUserRole().getColor());
+                    userMap.put("roleIcon", user.getUserRole().getIcon());
+                    userMap.put("messageCount", user.getMessageCount());
+                    userMap.put("isMuted", user.getIsMuted());
+                    userMap.put("isBanned", user.getIsBanned());
+
                     return userMap;
                 })
                 .collect(Collectors.toList());
