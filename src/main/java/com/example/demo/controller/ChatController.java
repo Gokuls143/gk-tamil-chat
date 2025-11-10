@@ -48,6 +48,9 @@ public class ChatController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PermissionService permissionService;
+
     @GetMapping("/online-users")
     @ResponseBody
     public List<User> getOnlineUsers() {
