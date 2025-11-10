@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "users", indexes = @Index(columnList = "email", name = "ux_users_email"))
@@ -68,6 +70,7 @@ public class User {
     private String profilePicture;
     
     // Role system fields
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole userRole = UserRole.NEW_MEMBER;
 
