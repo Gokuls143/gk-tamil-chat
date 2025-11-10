@@ -28,8 +28,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.example.demo.dto.MessageDTO;
 import com.example.demo.model.Message;
 import com.example.demo.model.User;
+import com.example.demo.permissions.Permission;
 import com.example.demo.repository.MessageRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.PermissionService;
 import com.example.demo.service.UserTrackingService; // user online tracking
 
 @Controller
