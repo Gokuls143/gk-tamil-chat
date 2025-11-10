@@ -193,9 +193,22 @@ public enum Permission {
      * Get display name with proper formatting
      */
     public String getDisplayName() {
-        return name.replace("_", " ")
-                  .toLowerCase()
-                  .replaceAll("\\b\\w", b -> b.toUpperCase());
+        String formatted = name.replace("_", " ").toLowerCase();
+        // Capitalize first letter of each word
+        String[] words = formatted.split(" ");
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            if (words[i].length() > 0) {
+                result.append(Character.toUpperCase(words[i].charAt(0)));
+                if (words[i].length() > 1) {
+                    result.append(words[i].substring(1));
+                }
+            }
+            if (i < words.length - 1) {
+                result.append(" ");
+            }
+        }
+        return result.toString();
     }
 
     /**
