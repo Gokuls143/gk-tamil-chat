@@ -180,7 +180,8 @@ public class RoleController {
         String promotedBy = principal.getName();
 
         try {
-            User user = roleService.findUserByUsername(username);
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
             UserRole nextRole = user.getUserRole().getNextRole();
 
             if (nextRole == user.getUserRole()) {
