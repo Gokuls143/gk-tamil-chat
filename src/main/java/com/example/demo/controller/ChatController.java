@@ -368,4 +368,201 @@ public class ChatController {
         response.put("profile", profile);
         return response;
     }
+
+    // === NEW ROLE-BASED ENDPOINTS ===
+
+    /**
+     * Check if user can send messages
+     */
+    @GetMapping("/api/permissions/can-send-messages")
+    @ResponseBody
+    public Map<String, Object> canSendMessages(@RequestParam String username) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", username);
+        response.put("canSend", permissionService.canSendMessage(username));
+        response.put("canSendLinks", permissionService.canSendLinks(username));
+        response.put("canUploadImages", permissionService.canUploadImages(username));
+        return response;
+    }
+
+    /**
+     * Delete a message (moderation action)
+     */
+    @PostMapping("/api/messages/{messageId}/delete")
+    @ResponseBody
+    public Map<String, Object> deleteMessage(
+            @PathVariable Long messageId,
+            @RequestBody Map<String, String> payload) {
+
+        String moderatorUsername = payload.get("moderatorUsername");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get the message to be deleted
+            Message message = this.messageRepository.findById(messageId).orElse(null);
+            if (message == null) {
+                response.put("success", false);
+                response.put("error", "Message not found");
+                return response;
+            }
+
+            // Check if moderator can delete this message
+            boolean canDelete = permissionService.canDeleteMessage(moderatorUsername, message.getSender());
+            if (!canDelete) {
+                response.put("success", false);
+                response.put("error", "You don't have permission to delete this message");
+                return response;
+            }
+
+            // Delete the message
+            this.messageRepository.delete(message);
+
+            response.put("success", true);
+            response.put("message", "Message deleted successfully");
+            response.put("deletedBy", moderatorUsername);
+            response.put("deletedMessageId", messageId);
+
+            log.info("Message {} deleted by moderator {}", messageId, moderatorUsername);
+
+        } catch (Exception e) {
+            log.error("Error deleting message {}: {}", messageId, e.getMessage());
+            response.put("success", false);
+            response.put("error", "Failed to delete message: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Mute a user (moderation action)
+     */
+    @PostMapping("/api/users/{username}/mute")
+    @ResponseBody
+    public Map<String, Object> muteUser(
+            @PathVariable String username,
+            @RequestBody Map<String, String> payload) {
+
+        String moderatorUsername = payload.get("moderatorUsername");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check if moderator can mute this user
+            boolean canMute = permissionService.canMuteUser(moderatorUsername, username);
+            if (!canMute) {
+                response.put("success", false);
+                response.put("error", "You don't have permission to mute this user");
+                return response;
+            }
+
+            // Get target user and mute them
+            User targetUser = this.userRepository.findByUsername(username);
+            if (targetUser == null) {
+                response.put("success", false);
+                response.put("error", "User not found");
+                return response;
+            }
+
+            targetUser.setIsMuted(true);
+            this.userRepository.save(targetUser);
+
+            response.put("success", true);
+            response.put("message", "User muted successfully");
+            response.put("mutedUsername", username);
+            response.put("mutedBy", moderatorUsername);
+
+            log.info("User {} muted by moderator {}", username, moderatorUsername);
+
+        } catch (Exception e) {
+            log.error("Error muting user {}: {}", username, e.getMessage());
+            response.put("success", false);
+            response.put("error", "Failed to mute user: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Ban a user (admin action)
+     */
+    @PostMapping("/api/users/{username}/ban")
+    @ResponseBody
+    public Map<String, Object> banUser(
+            @PathVariable String username,
+            @RequestBody Map<String, String> payload) {
+
+        String adminUsername = payload.get("adminUsername");
+        String reason = payload.getOrDefault("reason", "No reason provided");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check if admin can ban this user
+            boolean canBan = permissionService.canBanUser(adminUsername, username);
+            if (!canBan) {
+                response.put("success", false);
+                response.put("error", "You don't have permission to ban this user");
+                return response;
+            }
+
+            // Get target user and ban them
+            User targetUser = this.userRepository.findByUsername(username);
+            if (targetUser == null) {
+                response.put("success", false);
+                response.put("error", "User not found");
+                return response;
+            }
+
+            targetUser.setIsBanned(true);
+            this.userRepository.save(targetUser);
+
+            response.put("success", true);
+            response.put("message", "User banned successfully");
+            response.put("bannedUsername", username);
+            response.put("bannedBy", adminUsername);
+            response.put("reason", reason);
+
+            log.warn("User {} banned by admin {} for reason: {}", username, adminUsername, reason);
+
+        } catch (Exception e) {
+            log.error("Error banning user {}: {}", username, e.getMessage());
+            response.put("success", false);
+            response.put("error", "Failed to ban user: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Get user's permissions
+     */
+    @GetMapping("/api/users/{username}/permissions")
+    @ResponseBody
+    public Map<String, Object> getUserPermissions(@PathVariable String username) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            var permissions = permissionService.getUserPermissions(username);
+            var userRole = permissionService.getUserRole(username);
+
+            response.put("username", username);
+            response.put("role", userRole.name());
+            response.put("roleDisplayName", userRole.getDisplayName());
+            response.put("permissions", permissions.stream()
+                    .map(Permission::getName)
+                    .toList());
+
+            // Include individual permission checks
+            response.put("canSendMessages", permissionService.canSendMessage(username));
+            response.put("canSendLinks", permissionService.canSendLinks(username));
+            response.put("canUploadImages", permissionService.canUploadImages(username));
+            response.put("canModerate", permissionService.isModeratorOrHigher(username));
+            response.put("canAdministrate", permissionService.isAdminOrHigher(username));
+            response.put("isSuperAdmin", permissionService.isSuperAdmin(username));
+
+        } catch (Exception e) {
+            log.error("Error getting permissions for user {}: {}", username, e.getMessage());
+            response.put("error", "Failed to get permissions: " + e.getMessage());
+        }
+
+        return response;
+    }
 }
