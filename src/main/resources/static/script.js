@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     function updateRoleUI(user) {
+        console.log('User object:', user);
         // Example: Show admin panel button only for ADMIN/SUPER_ADMIN
         const adminPanelBtn = document.getElementById('adminPanelBtn');
         if (adminPanelBtn) {
