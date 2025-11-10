@@ -1,21 +1,29 @@
 package com.example.demo.controller;
-import com.example.demo.service.PermissionService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.Admin;
 import com.example.demo.service.AdminService;
-import com.example.demo.service.UserService;
 import com.example.demo.service.MessageService;
+import com.example.demo.service.PermissionService;
+import com.example.demo.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -53,6 +61,7 @@ public class AdminAuthController {
             session.setAttribute(ADMIN_SESSION_KEY, admin.getUsername());
             session.setAttribute("admin_role", admin.getRole());
             session.setAttribute("admin_id", admin.getId());
+            session.setMaxInactiveInterval(24 * 60 * 60); // 24 hours
             response.put("success", true);
             response.put("message", "Login successful");
             response.put("username", admin.getUsername());

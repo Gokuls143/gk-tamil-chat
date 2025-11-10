@@ -1,14 +1,15 @@
 package com.example.demo.service;
 
-import com.example.demo.model.Admin;
-import com.example.demo.repository.AdminRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.example.demo.model.Admin;
+import com.example.demo.repository.AdminRepository;
 
 @Service
 public class AdminService {
@@ -129,17 +130,6 @@ public class AdminService {
      * Create initial super admin if no admins exist
      */
     public void createInitialSuperAdmin() {
-        if (this.adminRepository.count() == 0) {
-            Admin superAdmin = new Admin();
-            superAdmin.setUsername("popcorn");
-            superAdmin.setPassword(this.passwordEncoder.encode("Popcorn@2025"));
-            superAdmin.setEmail("gokulkannans92@gmail.com");
-            superAdmin.setRole("SUPER_ADMIN");
-            superAdmin.setActive(true);
-            superAdmin.setCreatedAt(LocalDateTime.now());
-            
-            this.adminRepository.save(superAdmin);
-            System.out.println("Created initial super admin: popcorn / Popcorn@2025");
-        }
+        // Initial super admin creation removed. Please create admin via DB migration or admin UI.
     }
 }
