@@ -184,11 +184,16 @@
     const avatarBtn = document.getElementById('avatarBtn');
     const avatarDropdown = document.getElementById('avatarDropdown');
     avatarBtn.addEventListener('click', function(e) {
-      avatarDropdown.style.display = avatarDropdown.style.display === 'block' ? 'none' : 'block';
-      e.stopPropagation();
+  avatarDropdown.style.display = 'block';
+  e.stopPropagation();
     });
     document.addEventListener('click', function() {
-      avatarDropdown.style.display = 'none';
+      // Only hide if click is outside avatarBtn and avatarDropdown
+      document.addEventListener('click', function(event) {
+        if (!avatarBtn.contains(event.target) && !avatarDropdown.contains(event.target)) {
+          avatarDropdown.style.display = 'none';
+        }
+      });
     });
 
     // Set avatar initial
