@@ -350,6 +350,20 @@ public class ChatController {
         profile.put("description", user.getDescription());
         profile.put("story", user.getStory());
         profile.put("profilePicture", user.getProfilePicture());
+
+        // Add role information to profile
+        profile.put("role", user.getUserRole().name());
+        profile.put("roleDisplayName", user.getUserRole().getDisplayName());
+        profile.put("roleLevel", user.getUserRole().getLevel());
+        profile.put("roleColor", user.getUserRole().getColor());
+        profile.put("roleIcon", user.getUserRole().getIcon());
+        profile.put("roleDescription", user.getUserRole().getDescription());
+        profile.put("permissions", user.getUserRole().getPermissionNames());
+        profile.put("messageCount", user.getMessageCount());
+        profile.put("accountAgeDays", user.getAccountAgeInDays());
+        profile.put("daysInCurrentRole", user.getDaysInCurrentRole());
+        profile.put("roleAssignedAt", user.getRoleAssignedAt());
+        profile.put("eligibleForProgression", user.isEligibleForProgression());
         
         response.put("profile", profile);
         return response;
