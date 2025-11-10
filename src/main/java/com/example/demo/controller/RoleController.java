@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.enums.UserRole;
 import com.example.demo.model.User;
 import com.example.demo.permissions.Permission;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.service.PermissionService;
 import com.example.demo.service.RoleService;
 
