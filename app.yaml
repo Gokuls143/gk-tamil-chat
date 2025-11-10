@@ -1,0 +1,6 @@
+runtime: java21
+env: standard
+instance_class: F2
+entrypoint: java -jar build/libs/app.jar
+env_variables:
+  SPRING_PROFILES_ACTIVE: gcld
