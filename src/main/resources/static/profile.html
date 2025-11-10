@@ -97,6 +97,16 @@
         </a>
       </div>
       <div class="header-title">My Profile</div>
+      <div class="header-avatar" style="position:relative;">
+        <div id="avatarBtn" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
+          <span id="avatarInitial" style="color:#fff;font-weight:700;font-size:1.2rem;">U</span>
+        </div>
+        <div id="avatarDropdown" style="display:none;position:absolute;top:48px;right:0;background:#1e293b;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);min-width:160px;z-index:1000;">
+          <a href="/profile.html" style="display:block;padding:12px 18px;color:#e6eef8;text-decoration:none;font-size:0.98rem;">Profile</a>
+          <a id="adminPanelLink" href="/admin/dashboard.html" style="display:none;padding:12px 18px;color:#10b981;text-decoration:none;font-size:0.98rem;">Admin Panel</a>
+          <a href="/logout" style="display:block;padding:12px 18px;color:#ef4444;text-decoration:none;font-size:0.98rem;">Logout</a>
+        </div>
+      </div>
     </header>
 
     <div class="profile-content">
@@ -170,6 +180,46 @@
   </div>
 
   <script>
+    // Avatar dropdown logic
+    const avatarBtn = document.getElementById('avatarBtn');
+    const avatarDropdown = document.getElementById('avatarDropdown');
+    avatarBtn.addEventListener('click', function(e) {
+      avatarDropdown.style.display = avatarDropdown.style.display === 'block' ? 'none' : 'block';
+      e.stopPropagation();
+    });
+    document.addEventListener('click', function() {
+      avatarDropdown.style.display = 'none';
+    });
+
+    // Set avatar initial
+    function setAvatarInitial(name) {
+      const initial = name && name.length > 0 ? name[0].toUpperCase() : 'U';
+      document.getElementById('avatarInitial').textContent = initial;
+    }
+
+    // Check admin role and show Admin Panel link
+    async function checkAdminRole() {
+      try {
+        const response = await fetch('/api/admin/session/check', { credentials: 'same-origin', cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authenticated && data.role && (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN')) {
+            document.getElementById('adminPanelLink').style.display = 'block';
+          }
+        }
+      } catch (e) {
+        // Hide admin panel link if not admin
+        document.getElementById('adminPanelLink').style.display = 'none';
+      }
+    }
+
+    // On page load, set avatar and check admin
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Set avatar initial from username
+      const username = await resolveUserFromServer();
+      setAvatarInitial(username);
+      await checkAdminRole();
+    });
     let currentUser = null;
     let currentProfilePicture = null;
 
