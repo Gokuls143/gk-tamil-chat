@@ -13,7 +13,11 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "users", indexes = @Index(columnList = "email", name = "ux_users_email"))
+@Table(name = "users", indexes = {
+    @Index(columnList = "email", name = "ux_users_email"),
+    @Index(columnList = "user_role", name = "idx_users_role"),
+    @Index(columnList = "last_activity_at", name = "idx_users_activity")
+})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,32 +28,57 @@ public class User {
 
     @Column(nullable = false, length = 255)
     private String email;
-    
+
     private String gender;
     private Integer age;
-    
+
     @Column(length = 100)
     private String status;
-    
+
     @Column(length = 500)
     private String description;
-    
+
     @Column(length = 1000)
     private String story;
-    
+
     @Column(columnDefinition = "LONGTEXT")
     private String profilePicture;
-    
-    // Admin role fields
+
+    // === NEW ROLE SYSTEM FIELDS ===
+
+    @Column(name = "user_role", nullable = false, length = 20)
+    private UserRole userRole = UserRole.NEW_MEMBER;
+
+    @Column(name = "role_assigned_at")
+    private LocalDateTime roleAssignedAt;
+
+    @Column(name = "last_activity_at")
+    private LocalDateTime lastActivityAt;
+
+    @Column(name = "role_changed_by", length = 255)
+    private String roleChangedBy;
+
+    // Activity tracking for role progression
+    @Column(name = "message_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer messageCount = 0;
+
+    @Column(name = "account_created_at")
+    private LocalDateTime accountCreatedAt;
+
+    @Column(name = "last_role_progression_check")
+    private LocalDateTime lastRoleProgressionCheck;
+
+    // === LEGACY ADMIN FIELDS (kept for backward compatibility) ===
+
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isAdmin = false;
-    
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE") 
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isMuted = false;
-    
+
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isBanned = false;
-    
+
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isSuperAdmin = false;
 
