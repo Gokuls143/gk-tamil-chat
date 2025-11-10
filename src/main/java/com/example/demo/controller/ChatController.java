@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.service.PermissionService;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ public class ChatController {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
     
     @Autowired
+    private PermissionService permissionService;
+    @Autowired
     private UserTrackingService userTrackingService;
 
     @Autowired
@@ -57,10 +60,8 @@ public class ChatController {
     public Map<String, Object> getAllUsers() {
         // For now, return a simple response to fix the frontend loading issue
         // Database transactions are having issues, so we'll implement a workaround
-        
-        List<Map<String, Object>> userList = new ArrayList<>();
-        
-        try {
+    List<Map<String, Object>> userList = new ArrayList<>();
+    try {
             // Try to get users from database
             List<User> allUsers = this.userRepository.findAll();
             
@@ -194,6 +195,15 @@ public class ChatController {
     @MessageMapping("/sendMessage")
     @SendTo("/topic/messages")
     public MessageDTO sendMessage(Message incoming) {
+        // Permission check: Only MEMBER and above can send links
+        if (incoming != null && incoming.getContent() != null && incoming.getContent().matches(".*https?://.*")) {
+            User senderUser = this.userRepository.findByUsername(incoming.getSender());
+            if (senderUser != null && !this.permissionService.canSendLink(senderUser)) {
+                // Optionally log or notify
+                log.warn("User {} is not allowed to send links.", incoming.getSender());
+                return null;
+            }
+        }
         if (incoming == null) return null;
         // basic normalization: trim content and sender
         String content = incoming.getContent() == null ? null : incoming.getContent().trim();

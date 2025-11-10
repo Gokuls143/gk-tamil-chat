@@ -1,4 +1,6 @@
+
 package com.example.demo.controller;
+import com.example.demo.service.PermissionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminAuthController {
+    @Autowired
+    private PermissionService permissionService;
 
     @Autowired
     private AdminService adminService;

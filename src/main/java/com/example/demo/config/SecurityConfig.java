@@ -53,10 +53,11 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/api/admin/logout"),
                     new AntPathRequestMatcher("/api/admin/session/check")
                 ).permitAll()
-                // Admin API endpoints - require authentication but handled by controller
-                .requestMatchers(
-                    new AntPathRequestMatcher("/api/admin/**")
-                ).authenticated()
+                // Restrict admin role management and sensitive endpoints
+                .requestMatchers(new AntPathRequestMatcher("/api/roles/**"),
+                                new AntPathRequestMatcher("/admin-role-management.html"),
+                                new AntPathRequestMatcher("/api/admin/**"))
+                .hasAnyAuthority("ADMIN", "SUPER_ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(AbstractHttpConfigurer::disable)

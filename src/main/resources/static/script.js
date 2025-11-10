@@ -1,4 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Fetch current user info for role-based UI
+    let currentUser = null;
+    fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+            currentUser = data;
+            updateRoleUI(currentUser);
+        });
+
+    function updateRoleUI(user) {
+        // Example: Show admin panel button only for ADMIN/SUPER_ADMIN
+        const adminPanelBtn = document.getElementById('adminPanelBtn');
+        if (adminPanelBtn) {
+            adminPanelBtn.style.display = (user.userRole === 'ADMIN' || user.userRole === 'SUPER_ADMIN') ? 'inline-block' : 'none';
+        }
+        // Example: Show moderator tools only for MODERATOR+
+        const modTools = document.getElementById('moderatorTools');
+        if (modTools) {
+            modTools.style.display = (['MODERATOR','ADMIN','SUPER_ADMIN'].includes(user.userRole)) ? 'block' : 'none';
+        }
+        // Add role badge to user profile
+        const roleBadge = document.getElementById('roleBadge');
+        if (roleBadge) {
+            roleBadge.textContent = user.userRole;
+            roleBadge.className = 'role-badge ' + user.userRole;
+        }
+    }
     // Mobile optimization: Add mobile-specific classes and behaviors
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
