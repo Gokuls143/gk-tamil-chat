@@ -40,6 +40,9 @@ public class RoleController {
     @Autowired
     private PermissionService permissionService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     /**
      * Get all available roles with their permissions
      */
