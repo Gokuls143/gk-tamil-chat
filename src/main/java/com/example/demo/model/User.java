@@ -1,5 +1,9 @@
 package com.example.demo.model;
 
+import java.time.LocalDateTime;
+
+import com.example.demo.enums.UserRole;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
