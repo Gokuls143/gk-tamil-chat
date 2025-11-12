@@ -1363,30 +1363,25 @@
     }
     
     function checkAdminStatus(username) {
-      // Only show admin panel for specific super admin user
-      if (username !== 'popcorn') {
-        document.getElementById('adminPanelBtn').style.display = 'none';
-        return;
-      }
-      
-      // Check if current user is admin to show admin panel link
-      fetch('/api/admin/stats', { 
+      // Hide admin button by default
+      document.querySelectorAll('.dropdown-item').forEach(function(btn) {
+        if (btn.textContent.trim() === 'Admin') {
+          btn.style.display = 'none';
+        }
+      });
+      // Show admin button only for users with ADMIN or SUPER_ADMIN roles
+      fetch('/api/admin/session/check', {
         method: 'GET',
-        credentials: 'same-origin' 
+        credentials: 'same-origin'
       })
       .then(response => {
         if (response.ok) {
-          // User is admin, show admin panel button
-          document.getElementById('adminPanelBtn').style.display = 'block';
-          console.log('Admin access detected - showing admin panel link');
-        } else {
-          // User is not admin, keep button hidden
-          document.getElementById('adminPanelBtn').style.display = 'none';
+          document.querySelectorAll('.dropdown-item').forEach(function(btn) {
+            if (btn.textContent.trim() === 'Admin') {
+              btn.style.display = 'block';
+            }
+          });
         }
-      })
-      .catch(error => {
-        // Error or no admin access, keep button hidden
-        document.getElementById('adminPanelBtn').style.display = 'none';
       });
     }
     

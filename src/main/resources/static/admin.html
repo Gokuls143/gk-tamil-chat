@@ -171,17 +171,20 @@
         }
         
         function checkAdminAccess() {
-            return fetch('/session/me', { credentials: 'same-origin' })
+            return fetch('/api/admin/session/check', { credentials: 'same-origin' })
                 .then(response => {
                     if (!response.ok) {
-                        window.location.href = '/';
-                        throw new Error('Not logged in');
+                        showError('Access denied - admin privileges required');
+                        setTimeout(() => window.location.href = '/', 2000);
+                        throw new Error('Access denied');
                     }
-                    return response.text();
+                    return response.json();
                 })
-                .then(username => {
-                    currentUser = username;
-                    return username;
+                .then(data => {
+                    currentUser = data.username;
+                    isSuperAdmin = data.role === 'SUPER_ADMIN';
+                    // Show admin UI here
+                    document.body.style.display = 'block';
                 });
         }
         

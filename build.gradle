@@ -33,10 +33,9 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j' // MySQL for Railway
     runtimeOnly 'org.postgresql:postgresql' // PostgreSQL for Render
 
-    runtimeOnly 'com.mysql:mysql-connector-j'
-
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'com.h2database:h2'
+    runtimeOnly 'com.h2database:h2' // enable H2 for local dev profile
 }
 
 tasks.named('test') {
@@ -45,4 +44,12 @@ tasks.named('test') {
 
 bootJar {
     archiveFileName = 'app.jar'
+}
+
+bootRun {
+    // default to dev profile for local runs unless explicitly set
+    systemProperty "spring.profiles.active",
+        System.getProperty("spring.profiles.active")
+            ?: System.getenv("SPRING_PROFILES_ACTIVE")
+            ?: "dev"
 }
