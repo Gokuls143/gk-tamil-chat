@@ -29,8 +29,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.example.demo.dto.MessageDTO;
 import com.example.demo.model.Message;
 import com.example.demo.model.User;
+import com.example.demo.permissions.Permission;
 import com.example.demo.repository.MessageRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.PermissionService;
 import com.example.demo.service.UserTrackingService; // user online tracking
 
 @Controller
@@ -48,6 +50,9 @@ public class ChatController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PermissionService permissionService;
 
     @GetMapping("/online-users")
     @ResponseBody
@@ -88,6 +93,17 @@ public class ChatController {
                     userMap.put("isGuest", false);
                     userMap.put("profilePicture", user.getProfilePicture());
                     userMap.put("status", user.getStatus());
+
+                    // Add role information
+                    userMap.put("role", user.getUserRole().name());
+                    userMap.put("roleDisplayName", user.getUserRole().getDisplayName());
+                    userMap.put("roleLevel", user.getUserRole().getLevel());
+                    userMap.put("roleColor", user.getUserRole().getColor());
+                    userMap.put("roleIcon", user.getUserRole().getIcon());
+                    userMap.put("messageCount", user.getMessageCount());
+                    userMap.put("isMuted", user.getIsMuted());
+                    userMap.put("isBanned", user.getIsBanned());
+
                     return userMap;
                 })
                 .collect(Collectors.toList());
@@ -205,36 +221,76 @@ public class ChatController {
             }
         }
         if (incoming == null) return null;
+
         // basic normalization: trim content and sender
         String content = incoming.getContent() == null ? null : incoming.getContent().trim();
         String sender = incoming.getSender() == null ? "anonymous" : incoming.getSender().trim();
+
         if (content == null || content.isEmpty()) {
             // ignore empty messages
             return null;
         }
+
+        // === PERMISSION VALIDATION ===
+
+        // Validate message content based on user permissions
+        PermissionService.MessageValidationResult validation = permissionService.validateMessageContent(sender, content);
+        if (!validation.isApproved()) {
+            log.warn("Message rejected for user {}: {}", sender, validation.getRejectionReason());
+            // Create a system message to inform about the restriction
+            Message systemMessage = new Message();
+            systemMessage.setSender("system");
+            systemMessage.setContent(String.format("Message from %s was not sent: %s",
+                sender, validation.getRejectionReason()));
+            ZoneId istZone = ZoneId.of("Asia/Kolkata");
+            systemMessage.setTimestamp(ZonedDateTime.now(istZone).toLocalDateTime());
+            Message savedSystem = this.messageRepository.save(systemMessage);
+            return new MessageDTO(savedSystem, null);
+        }
+
+        // === MESSAGE PROCESSING ===
+
         Message toSave = new Message();
         toSave.setSender(sender.isEmpty() ? "anonymous" : sender);
         toSave.setContent(content);
-        
+
         // Handle quoted message information
         if (incoming.getQuotedMessageId() != null) {
             toSave.setQuotedMessageId(incoming.getQuotedMessageId());
             toSave.setQuotedSender(incoming.getQuotedSender());
             toSave.setQuotedContent(incoming.getQuotedContent());
         }
-        
+
         // Use Indian Standard Time (IST) timezone for consistent timestamp handling
         ZoneId istZone = ZoneId.of("Asia/Kolkata");
         toSave.setTimestamp(ZonedDateTime.now(istZone).toLocalDateTime());
         Message saved = this.messageRepository.save(toSave);
-        
+
+        // === USER ACTIVITY TRACKING ===
+
+        try {
+            // Update user activity and message count
+            User user = this.userRepository.findByUsername(saved.getSender());
+            if (user != null) {
+                // Increment message count and update activity
+                user.incrementMessageCount();
+                user.updateLastActivity();
+                this.userRepository.save(user);
+
+                log.debug("Updated user activity for {}: {} messages, last activity: {}",
+                         user.getUsername(), user.getMessageCount(), user.getLastActivityAt());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to update user activity for {}: {}", sender, e.getMessage());
+        }
+
         // Log for debugging timestamp issues
-        log.debug("Saving message with timestamp: {} (IST zone: {})", 
+        log.debug("Saving message with timestamp: {} (IST zone: {})",
                  saved.getTimestamp(), istZone);
-        
+
         // Find user for avatar information
         User user = this.userRepository.findByUsername(saved.getSender());
-        
+
         return new MessageDTO(saved, user);
     }
 
@@ -304,8 +360,219 @@ public class ChatController {
         profile.put("description", user.getDescription());
         profile.put("story", user.getStory());
         profile.put("profilePicture", user.getProfilePicture());
+
+        // Add role information to profile
+        profile.put("role", user.getUserRole().name());
+        profile.put("roleDisplayName", user.getUserRole().getDisplayName());
+        profile.put("roleLevel", user.getUserRole().getLevel());
+        profile.put("roleColor", user.getUserRole().getColor());
+        profile.put("roleIcon", user.getUserRole().getIcon());
+        profile.put("roleDescription", user.getUserRole().getDescription());
+        profile.put("permissions", user.getUserRole().getPermissionNames());
+        profile.put("messageCount", user.getMessageCount());
+        profile.put("accountAgeDays", user.getAccountAgeInDays());
+        profile.put("daysInCurrentRole", user.getDaysInCurrentRole());
+        profile.put("roleAssignedAt", user.getRoleAssignedAt());
+        profile.put("eligibleForProgression", user.isEligibleForProgression());
         
         response.put("profile", profile);
+        return response;
+    }
+
+    // === NEW ROLE-BASED ENDPOINTS ===
+
+    /**
+     * Check if user can send messages
+     */
+    @GetMapping("/api/permissions/can-send-messages")
+    @ResponseBody
+    public Map<String, Object> canSendMessages(@RequestParam String username) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", username);
+        response.put("canSend", permissionService.canSendMessage(username));
+        response.put("canSendLinks", permissionService.canSendLinks(username));
+        response.put("canUploadImages", permissionService.canUploadImages(username));
+        return response;
+    }
+
+    /**
+     * Delete a message (moderation action)
+     */
+    @PostMapping("/api/messages/{messageId}/delete")
+    @ResponseBody
+    public Map<String, Object> deleteMessage(
+            @PathVariable Long messageId,
+            @RequestBody Map<String, String> payload) {
+
+        String moderatorUsername = payload.get("moderatorUsername");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get the message to be deleted
+            Message message = this.messageRepository.findById(messageId).orElse(null);
+            if (message == null) {
+                response.put("success", false);
+                response.put("error", "Message not found");
+                return response;
+            }
+
+            // Check if moderator can delete this message
+            boolean canDelete = permissionService.canDeleteMessage(moderatorUsername, message.getSender());
+            if (!canDelete) {
+                response.put("success", false);
+                response.put("error", "You don't have permission to delete this message");
+                return response;
+            }
+
+            // Delete the message
+            this.messageRepository.delete(message);
+
+            response.put("success", true);
+            response.put("message", "Message deleted successfully");
+            response.put("deletedBy", moderatorUsername);
+            response.put("deletedMessageId", messageId);
+
+            log.info("Message {} deleted by moderator {}", messageId, moderatorUsername);
+
+        } catch (Exception e) {
+            log.error("Error deleting message {}: {}", messageId, e.getMessage());
+            response.put("success", false);
+            response.put("error", "Failed to delete message: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Mute a user (moderation action)
+     */
+    @PostMapping("/api/users/{username}/mute")
+    @ResponseBody
+    public Map<String, Object> muteUser(
+            @PathVariable String username,
+            @RequestBody Map<String, String> payload) {
+
+        String moderatorUsername = payload.get("moderatorUsername");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check if moderator can mute this user
+            boolean canMute = permissionService.canMuteUser(moderatorUsername, username);
+            if (!canMute) {
+                response.put("success", false);
+                response.put("error", "You don't have permission to mute this user");
+                return response;
+            }
+
+            // Get target user and mute them
+            User targetUser = this.userRepository.findByUsername(username);
+            if (targetUser == null) {
+                response.put("success", false);
+                response.put("error", "User not found");
+                return response;
+            }
+
+            targetUser.setIsMuted(true);
+            this.userRepository.save(targetUser);
+
+            response.put("success", true);
+            response.put("message", "User muted successfully");
+            response.put("mutedUsername", username);
+            response.put("mutedBy", moderatorUsername);
+
+            log.info("User {} muted by moderator {}", username, moderatorUsername);
+
+        } catch (Exception e) {
+            log.error("Error muting user {}: {}", username, e.getMessage());
+            response.put("success", false);
+            response.put("error", "Failed to mute user: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Ban a user (admin action)
+     */
+    @PostMapping("/api/users/{username}/ban")
+    @ResponseBody
+    public Map<String, Object> banUser(
+            @PathVariable String username,
+            @RequestBody Map<String, String> payload) {
+
+        String adminUsername = payload.get("adminUsername");
+        String reason = payload.getOrDefault("reason", "No reason provided");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check if admin can ban this user
+            boolean canBan = permissionService.canBanUser(adminUsername, username);
+            if (!canBan) {
+                response.put("success", false);
+                response.put("error", "You don't have permission to ban this user");
+                return response;
+            }
+
+            // Get target user and ban them
+            User targetUser = this.userRepository.findByUsername(username);
+            if (targetUser == null) {
+                response.put("success", false);
+                response.put("error", "User not found");
+                return response;
+            }
+
+            targetUser.setIsBanned(true);
+            this.userRepository.save(targetUser);
+
+            response.put("success", true);
+            response.put("message", "User banned successfully");
+            response.put("bannedUsername", username);
+            response.put("bannedBy", adminUsername);
+            response.put("reason", reason);
+
+            log.warn("User {} banned by admin {} for reason: {}", username, adminUsername, reason);
+
+        } catch (Exception e) {
+            log.error("Error banning user {}: {}", username, e.getMessage());
+            response.put("success", false);
+            response.put("error", "Failed to ban user: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * Get user's permissions
+     */
+    @GetMapping("/api/users/{username}/permissions")
+    @ResponseBody
+    public Map<String, Object> getUserPermissions(@PathVariable String username) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            var permissions = permissionService.getUserPermissions(username);
+            var userRole = permissionService.getUserRole(username);
+
+            response.put("username", username);
+            response.put("role", userRole.name());
+            response.put("roleDisplayName", userRole.getDisplayName());
+            response.put("permissions", permissions.stream()
+                    .map(Permission::getName)
+                    .toList());
+
+            // Include individual permission checks
+            response.put("canSendMessages", permissionService.canSendMessage(username));
+            response.put("canSendLinks", permissionService.canSendLinks(username));
+            response.put("canUploadImages", permissionService.canUploadImages(username));
+            response.put("canModerate", permissionService.isModeratorOrHigher(username));
+            response.put("canAdministrate", permissionService.isAdminOrHigher(username));
+            response.put("isSuperAdmin", permissionService.isSuperAdmin(username));
+
+        } catch (Exception e) {
+            log.error("Error getting permissions for user {}: {}", username, e.getMessage());
+            response.put("error", "Failed to get permissions: " + e.getMessage());
+        }
+
         return response;
     }
 }

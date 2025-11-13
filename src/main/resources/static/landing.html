@@ -68,6 +68,22 @@
     .users-toggle-btn svg{width:16px;height:16px;fill:currentColor;transition:transform 0.3s;flex-shrink:0}
     .users-toggle-btn.active svg{transform:rotate(180deg)}
     
+    /* Role Badge Styles */
+    .role-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
+    .role-badge.role-new-member{background:rgba(148,163,184,0.2);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)}
+    .role-badge.role-member{background:rgba(6,182,212,0.2);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)}
+    .role-badge.role-vip{background:rgba(139,92,246,0.2);color:#8b5cf6;border:1px solid rgba(139,92,246,0.3)}
+    .role-badge.role-moderator{background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)}
+    .role-badge.role-admin{background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+    .role-badge.role-super-admin{background:rgba(220,38,38,0.2);color:#dc2626;border:1px solid rgba(220,38,38,0.3)}
+
+    /* Role Indicators in Messages */
+    .msg-role-badge{margin-left:6px;font-size:.65rem;opacity:0.8}
+    .msg-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.1);flex-shrink:0}
+    .user-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .username-wrapper{display:flex;align-items:center;gap:6px}
+
     /* User List Items */
     .user-section{padding:8px}
     .section-title{padding:8px 12px;font-size:.85rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
@@ -77,6 +93,7 @@
     .user-item .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:.85rem;overflow:hidden;flex-shrink:0}
     .user-item .user-avatar img{width:100%;height:100%;object-fit:cover}
     .user-item .user-info{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+    .user-item .name-wrapper{display:flex;align-items:center;gap:6px}
     .user-item .name{font-size:.9rem;color:#e6eef8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .user-item .user-status{font-size:.75rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .user-item .dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0}
@@ -2054,7 +2071,11 @@
             <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             Profile
           </button>
-          <button class="dropdown-item" id="adminBtn" onclick="window.location.href='/admin.html'" style="display:none;">
+          <button class="dropdown-item" id="moderatorToolsBtn" style="display:none;" onclick="toggleModeratorTools()">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>
+            🛠️ Moderator Tools
+          </button>
+          <button class="dropdown-item" id="adminPanelBtn" style="display:none;" onclick="window.location.href='/admin.html'">
             <svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
             Admin
           </button>
