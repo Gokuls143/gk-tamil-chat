@@ -210,6 +210,23 @@
       // Set avatar initial from username
       const username = await resolveUserFromServer();
       setAvatarInitial(username);
+
+      // Fetch user role and show/hide admin link
+      try {
+        const response = await fetch('/api/admin/session/check', { credentials: 'same-origin' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN') {
+            document.querySelector('a[href="/admin.html"]').style.display = 'block';
+          } else {
+            document.querySelector('a[href="/admin.html"]').style.display = 'none';
+          }
+        } else {
+          document.querySelector('a[href="/admin.html"]').style.display = 'none';
+        }
+      } catch (e) {
+        document.querySelector('a[href="/admin.html"]').style.display = 'none';
+      }
     });
     let currentUser = null;
     let currentProfilePicture = null;
