@@ -30,6 +30,19 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Install Python, pip, and yt-dlp for Bloomee-style music integration
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    ffmpeg \
+    && pip3 install --no-cache-dir yt-dlp \
+    && yt-dlp --version
+
+# Verify yt-dlp installation
+RUN echo "===== Verifying yt-dlp installation =====" && \
+    yt-dlp --version && \
+    echo "===== yt-dlp installed successfully ====="
+
 # Copy the JAR file
 COPY --from=build /build/build/libs/app.jar /app/app.jar
 

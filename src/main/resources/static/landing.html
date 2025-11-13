@@ -88,7 +88,9 @@
     .load-more-btn{background:linear-gradient(135deg,#334155,#475569);color:#e2e8f0;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 16px;margin:8px 16px 0;cursor:pointer;font-size:0.85rem;transition:all 0.2s;text-align:center}
     .load-more-btn:hover{background:linear-gradient(135deg,#475569,#64748b);transform:translateY(-1px)}
     .load-more-btn:active{transform:translateY(0)}
-    .messages{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;min-height:0}
+    .messages{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;min-height:0;background-image:url('/images/chat-bg.jpg');background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed;position:relative}
+    .messages::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(11,18,32,0.7);z-index:0;pointer-events:none}
+    .messages > *{position:relative;z-index:1}
     .msg{padding:8px 12px;border-radius:10px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);max-width:70%;word-wrap:break-word}
     .msg .meta{font-size:.8rem;color:#94a3b8;margin-bottom:4px}
     .msg .body{line-height:1.4;word-break:break-word}
@@ -103,6 +105,9 @@
     .username-clickable{color:#06b6d4;cursor:pointer;font-weight:600;transition:color 0.2s ease;border-radius:4px;padding:2px 4px;margin:-2px -4px}
     .username-clickable:hover{color:#0891b2;background:rgba(6,182,212,0.1);transform:translateY(-1px)}
     .username-clickable:active{transform:translateY(0)}
+    .mention-link{color:#06b6d4;cursor:pointer;font-weight:600;transition:all 0.2s ease;border-radius:4px;padding:2px 4px;margin:-2px -4px;text-decoration:none;display:inline-block}
+    .mention-link:hover{color:#0891b2;background:rgba(6,182,212,0.15);transform:translateY(-1px);text-decoration:underline}
+    .mention-link:active{transform:translateY(0)}
 
     /* Profile Modal Styles */
     .profile-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
@@ -127,6 +132,54 @@
     .compose button{padding:12px 20px;border-radius:10px;border:0;background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;font-weight:600;cursor:pointer;transition:transform 0.1s;white-space:nowrap;flex-shrink:0}
     .compose button:hover{transform:translateY(-1px)}
     .compose button:active{transform:translateY(0)}
+    
+    /* FM Player Styles */
+    .fm-player{background:#0f172a;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+    .fm-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;transition:background 0.2s}
+    .fm-header:hover{background:rgba(255,255,255,0.03)}
+    .fm-title{display:flex;align-items:center;color:#e6eef8;font-weight:600;font-size:0.9rem}
+    .fm-toggle-btn{background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;transition:transform 0.3s,color 0.2s}
+    .fm-toggle-btn:hover{color:#e6eef8}
+    .fm-toggle-btn.rotated{transform:rotate(180deg)}
+    .fm-player-content{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.05)}
+    .fm-now-playing{margin-bottom:12px}
+    .fm-track-info{margin-bottom:12px}
+    .fm-track-title{color:#f1f5f9;font-size:0.95rem;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fm-track-artist{color:#94a3b8;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fm-controls{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px}
+    .fm-control-btn{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s}
+    .fm-control-btn:hover{background:rgba(79,70,229,0.3);transform:scale(1.05)}
+    .fm-control-btn:active{transform:scale(0.95)}
+    .fm-play-btn{width:48px;height:48px;background:linear-gradient(135deg,#4f46e5,#06b6d4);border:none}
+    .fm-play-btn:hover{background:linear-gradient(135deg,#5b52f0,#10c4e0)}
+    .fm-progress{margin-top:8px}
+    .fm-progress-bar{width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;cursor:pointer;margin-bottom:6px}
+    .fm-progress-fill{height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);width:0%;transition:width 0.1s}
+    .fm-time{display:flex;justify-content:space-between;color:#94a3b8;font-size:0.75rem}
+    .fm-admin-controls{border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;margin-top:12px}
+    .fm-search-box{display:flex;gap:8px;margin-bottom:12px}
+    .fm-search-input{flex:1;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;outline:none;font-size:0.85rem}
+    .fm-search-input:focus{border-color:rgba(79,70,229,0.5)}
+    .fm-search-btn{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+    .fm-search-btn:hover{background:rgba(79,70,229,0.3)}
+    .fm-search-results{max-height:200px;overflow-y:auto;margin-bottom:12px}
+    .fm-search-item{padding:10px 12px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;display:flex;justify-content:space-between;align-items:center}
+    .fm-search-item:hover{background:#0f172a;border-color:rgba(79,70,229,0.3)}
+    .fm-search-item-info{flex:1;min-width:0}
+    .fm-search-item-title{color:#f1f5f9;font-size:0.9rem;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fm-search-item-artist{color:#94a3b8;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fm-search-item-add{background:rgba(79,70,229,0.2);border:1px solid rgba(79,70,229,0.3);color:#e6eef8;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;transition:all 0.2s}
+    .fm-search-item-add:hover{background:rgba(79,70,229,0.3)}
+    .fm-queue-title{color:#94a3b8;font-size:0.85rem;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+    .fm-queue-list{max-height:150px;overflow-y:auto}
+    .fm-queue-item{padding:8px 12px;background:#0b1426;border:1px solid rgba(255,255,255,0.06);border-radius:6px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;font-size:0.85rem}
+    .fm-queue-item.active{background:rgba(79,70,229,0.15);border-color:rgba(79,70,229,0.3)}
+    .fm-queue-item-info{flex:1;min-width:0}
+    .fm-queue-item-title{color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fm-queue-item-artist{color:#94a3b8;font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fm-queue-item-actions{display:flex;gap:4px}
+    .fm-queue-item-btn{background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;font-size:0.75rem;transition:color 0.2s}
+    .fm-queue-item-btn:hover{color:#ef4444}
     
     /* Attachment button */
     .attach-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.1s;flex-shrink:0}
@@ -681,7 +734,8 @@
           
           // Set profile information
           if (profileName) profileName.textContent = profile.username || 'Unknown User';
-          if (profileEmail) profileEmail.textContent = profile.email || 'No email provided';
+          // Email is hidden for privacy
+          if (profileEmail) profileEmail.style.display = 'none';
           
           // Set avatar
           if (profileAvatar) {
@@ -806,6 +860,9 @@
       
       const avatarUrl = quotedMsg.senderAvatar || `https://ui-avatars.com/api/?name=${quotedMsg.sender?.charAt(0)}&background=6c757d&color=fff&size=16&rounded=true`;
       
+      // Process mentions in quoted content
+      const processedContent = processMentions(quotedMsg.content || '');
+      
       return `
         <div class="quoted-message">
           <div class="quoted-header">
@@ -813,7 +870,7 @@
                  onerror="this.src='https://ui-avatars.com/api/?name=${quotedMsg.sender?.charAt(0)}&background=6c757d&color=fff&size=16&rounded=true'">
             <span>${quotedMsg.sender}</span>
           </div>
-          <div class="quoted-content collapsed">${quotedMsg.content}</div>
+          <div class="quoted-content collapsed">${processedContent}</div>
         </div>
       `;
     }
@@ -828,38 +885,65 @@
     function processMessageContent(content) {
       if (!content) return { hasMedia: false, html: '' };
       
+      let processedContent = content;
+      let hasEmbeddedMedia = false;
+      
+      // First, process @username mentions to make them clickable
+      processedContent = processMentions(processedContent);
+      
       // URL regex pattern for detecting URLs
       const urlRegex = /(https?:\/\/[^\s]+)/gi;
       const urls = content.match(urlRegex) || [];
       
-      if (urls.length === 0) {
-        return { hasMedia: false, html: content };
+      if (urls.length > 0) {
+        urls.forEach(url => {
+          // Check if URL is an image or GIF
+          if (isImageUrl(url)) {
+            const imageHtml = `
+              <div class="embedded-media">
+                <img src="${url}" alt="Embedded image" onclick="openImageModal('${url}')" 
+                     style="max-width: 300px; max-height: 200px; border-radius: 8px; cursor: pointer;"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div style="display: none; color: #ef4444; font-size: 0.8rem; margin-top: 4px;">Failed to load image</div>
+              </div>
+            `;
+            processedContent = processedContent.replace(url, imageHtml);
+            hasEmbeddedMedia = true;
+          } else {
+            // Make other URLs clickable
+            const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #06b6d4; text-decoration: underline;">${url}</a>`;
+            processedContent = processedContent.replace(url, linkHtml);
+          }
+        });
       }
       
-      let processedContent = content;
-      let hasEmbeddedMedia = false;
-      
-      urls.forEach(url => {
-        // Check if URL is an image or GIF
-        if (isImageUrl(url)) {
-          const imageHtml = `
-            <div class="embedded-media">
-              <img src="${url}" alt="Embedded image" onclick="openImageModal('${url}')" 
-                   style="max-width: 300px; max-height: 200px; border-radius: 8px; cursor: pointer;"
-                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-              <div style="display: none; color: #ef4444; font-size: 0.8rem; margin-top: 4px;">Failed to load image</div>
-            </div>
-          `;
-          processedContent = processedContent.replace(url, imageHtml);
-          hasEmbeddedMedia = true;
-        } else {
-          // Make other URLs clickable
-          const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #06b6d4; text-decoration: underline;">${url}</a>`;
-          processedContent = processedContent.replace(url, linkHtml);
-        }
-      });
-      
       return { hasMedia: hasEmbeddedMedia, html: processedContent };
+    }
+    
+    function processMentions(content) {
+      if (!content) return content;
+      
+      // Match @username patterns (alphanumeric and underscore)
+      // Pattern: @ followed by word characters, but not if it's part of a URL (http:// or https://)
+      // We process mentions before URLs, so we don't need to worry about HTML tags yet
+      const mentionRegex = /@(\w+)/g;
+      
+      return content.replace(mentionRegex, (match, username, offset) => {
+        // Check if this @ is part of a URL (like http:// or https://)
+        // Look backwards to see if there's http: or https: before this @
+        const beforeMatch = content.substring(Math.max(0, offset - 10), offset);
+        if (beforeMatch.includes('http://') || beforeMatch.includes('https://')) {
+          // This is part of a URL, don't process it
+          return match;
+        }
+        
+        // Escape username for safe HTML and JavaScript insertion
+        // Escape single quotes and backslashes for onclick attribute
+        const safeUsername = username.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const safeUsernameHtml = username.replace(/[<>]/g, '');
+        // Create clickable mention link
+        return `<span class="mention-link" onclick="tagUser('${safeUsername}'); event.stopPropagation();" title="Click to tag @${safeUsernameHtml}">@${safeUsernameHtml}</span>`;
+      });
     }
     
     function isImageUrl(url) {
@@ -968,11 +1052,15 @@
         }
       } else {
         if (msg.quotedMessage) {
+          // Process content with mentions
+          const processedContent = processMessageContent(msg.content || '');
           const contentDiv = document.createElement('div');
-          contentDiv.textContent = msg.content || '';
+          contentDiv.innerHTML = processedContent.html;
           bodyDiv.appendChild(contentDiv);
         } else {
-          bodyDiv.textContent = msg.content || '';
+          // Process content with mentions and set as HTML
+          const processedContent = processMessageContent(msg.content || '');
+          bodyDiv.innerHTML = processedContent.html;
         }
       }
       
@@ -1363,25 +1451,39 @@
     }
     
     function checkAdminStatus(username) {
+      // Get admin button by ID
+      const adminBtn = document.getElementById('adminBtn');
+      if (!adminBtn) {
+        console.log('Admin button not found');
+        return;
+      }
+      
       // Hide admin button by default
-      document.querySelectorAll('.dropdown-item').forEach(function(btn) {
-        if (btn.textContent.trim() === 'Admin') {
-          btn.style.display = 'none';
-        }
-      });
-      // Show admin button only for users with ADMIN or SUPER_ADMIN roles
-      fetch('/api/admin/session/check', {
+      adminBtn.style.display = 'none';
+      
+      // Check user role from profile to show admin button for ADMIN or SUPER_ADMIN
+      fetch('/api/profile', {
         method: 'GET',
-        credentials: 'same-origin'
+        credentials: 'include'
       })
       .then(response => {
-        if (response.ok) {
-          document.querySelectorAll('.dropdown-item').forEach(function(btn) {
-            if (btn.textContent.trim() === 'Admin') {
-              btn.style.display = 'block';
-            }
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Failed to load profile');
           });
         }
+        return response.json();
+      })
+      .then(profileData => {
+        const userRole = profileData.userRole;
+        // Show admin button if user has ADMIN or SUPER_ADMIN role
+        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+          adminBtn.style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.log('Could not check admin status:', error);
+        // Keep admin button hidden if check fails
       });
     }
     
@@ -1584,6 +1686,342 @@
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
     });
+    
+    // FM Player functionality
+    let fmAudio = null;
+    let fmIsPlaying = false;
+    let fmCurrentTrack = null;
+    let fmQueue = [];
+    let fmCurrentIndex = -1;
+    let fmUserRole = null;
+    let fmProgressInterval = null;
+    
+    function toggleFMPlayer() {
+      const content = document.getElementById('fmPlayerContent');
+      const toggleBtn = document.getElementById('fmToggleBtn');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggleBtn.classList.add('rotated');
+        checkFMAdminStatus();
+        loadFMQueue();
+      } else {
+        content.style.display = 'none';
+        toggleBtn.classList.remove('rotated');
+      }
+    }
+    
+    function checkFMAdminStatus() {
+      fetch('/api/profile', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(profileData => {
+        fmUserRole = profileData.userRole;
+        const adminControls = document.getElementById('fmAdminControls');
+        if (fmUserRole === 'ADMIN' || fmUserRole === 'SUPER_ADMIN') {
+          adminControls.style.display = 'block';
+        } else {
+          adminControls.style.display = 'none';
+        }
+      })
+      .catch(error => {
+        console.log('Could not check admin status for FM:', error);
+      });
+    }
+    
+    function fmTogglePlay() {
+      if (!fmCurrentTrack && fmQueue.length > 0) {
+        fmCurrentIndex = 0;
+        fmPlayTrack(fmQueue[0]);
+        return;
+      }
+      
+      if (fmAudio) {
+        if (fmIsPlaying) {
+          fmAudio.pause();
+          fmIsPlaying = false;
+          updateFMPlayButton(false);
+        } else {
+          fmAudio.play();
+          fmIsPlaying = true;
+          updateFMPlayButton(true);
+        }
+      }
+    }
+    
+    function updateFMPlayButton(playing) {
+      const playIcon = document.getElementById('fmPlayIcon');
+      if (playing) {
+        playIcon.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>';
+      } else {
+        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      }
+    }
+    
+    function fmNext() {
+      if (fmQueue.length === 0) return;
+      fmCurrentIndex = (fmCurrentIndex + 1) % fmQueue.length;
+      fmPlayTrack(fmQueue[fmCurrentIndex]);
+    }
+    
+    function fmPrevious() {
+      if (fmQueue.length === 0) return;
+      fmCurrentIndex = (fmCurrentIndex - 1 + fmQueue.length) % fmQueue.length;
+      fmPlayTrack(fmQueue[fmCurrentIndex]);
+    }
+    
+    function fmPlayTrack(track) {
+      if (!track || !track.url) return;
+      
+      if (fmAudio) {
+        fmAudio.pause();
+        fmAudio = null;
+      }
+      
+      fmCurrentTrack = track;
+      
+      // Handle YouTube URLs - extract audio or use direct audio URL
+      let audioUrl = track.url;
+      
+      // If it's a YouTube URL and we have audioUrl, use that
+      if (track.audioUrl) {
+        audioUrl = track.audioUrl;
+      } else if (track.url && track.url.includes('youtube.com') || track.url.includes('youtu.be')) {
+        // For YouTube URLs, we need to extract audio
+        // In production, backend should provide audioUrl via yt-dlp
+        // For now, use a proxy service or YouTube iframe
+        // You can use services like: https://www.youtube.com/api/timedtext?...
+        // Or integrate with youtube-dl-server
+        console.log('YouTube URL detected - audio extraction needed');
+        // For now, try to use the URL directly (if backend provides audioUrl)
+        audioUrl = track.url;
+      }
+      
+      fmAudio = new Audio(audioUrl);
+      
+      fmAudio.addEventListener('loadedmetadata', () => {
+        document.getElementById('fmDuration').textContent = formatTime(fmAudio.duration);
+      });
+      
+      fmAudio.addEventListener('timeupdate', () => {
+        if (fmAudio.duration) {
+          const progress = (fmAudio.currentTime / fmAudio.duration) * 100;
+          document.getElementById('fmProgress').style.width = progress + '%';
+          document.getElementById('fmCurrentTime').textContent = formatTime(fmAudio.currentTime);
+        }
+      });
+      
+      fmAudio.addEventListener('ended', () => {
+        fmNext();
+      });
+      
+      fmAudio.addEventListener('play', () => {
+        fmIsPlaying = true;
+        updateFMPlayButton(true);
+        startFMProgressUpdate();
+      });
+      
+      fmAudio.addEventListener('pause', () => {
+        fmIsPlaying = false;
+        updateFMPlayButton(false);
+        stopFMProgressUpdate();
+      });
+      
+      document.getElementById('fmTrackTitle').textContent = track.title || 'Unknown Title';
+      document.getElementById('fmTrackArtist').textContent = track.artist || 'Unknown Artist';
+      document.getElementById('fmStatus').textContent = 'Now Playing';
+      
+      updateFMQueueDisplay();
+      fmAudio.play();
+    }
+    
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    function startFMProgressUpdate() {
+      if (fmProgressInterval) clearInterval(fmProgressInterval);
+      fmProgressInterval = setInterval(() => {
+        if (fmAudio && !fmAudio.paused) {
+          const progress = (fmAudio.currentTime / fmAudio.duration) * 100;
+          document.getElementById('fmProgress').style.width = progress + '%';
+          document.getElementById('fmCurrentTime').textContent = formatTime(fmAudio.currentTime);
+        }
+      }, 100);
+    }
+    
+    function stopFMProgressUpdate() {
+      if (fmProgressInterval) {
+        clearInterval(fmProgressInterval);
+        fmProgressInterval = null;
+      }
+    }
+    
+    function fmSearchSongs() {
+      const query = document.getElementById('fmSearchInput').value.trim();
+      if (!query) {
+        alert('Please enter a search term');
+        return;
+      }
+      
+      fetch('/api/music/search?q=' + encodeURIComponent(query), {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        displayFMSearchResults(data.results || []);
+      })
+      .catch(error => {
+        console.error('Search failed:', error);
+        alert('Search failed. Please try again.');
+      });
+    }
+    
+    function displayFMSearchResults(results) {
+      const resultsContainer = document.getElementById('fmSearchResults');
+      if (results.length === 0) {
+        resultsContainer.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:0.85rem;">No results found</div>';
+        return;
+      }
+      
+      resultsContainer.innerHTML = results.map((track, index) => `
+        <div class="fm-search-item">
+          <div class="fm-search-item-info">
+            <div class="fm-search-item-title">${track.title || 'Unknown'}</div>
+            <div class="fm-search-item-artist">${track.artist || 'Unknown Artist'}</div>
+          </div>
+          <button class="fm-search-item-add" onclick="fmAddToQueue(${index})">Add</button>
+        </div>
+      `).join('');
+      
+      window.fmSearchResultsData = results;
+    }
+    
+    function fmAddToQueue(index) {
+      if (!window.fmSearchResultsData || !window.fmSearchResultsData[index]) return;
+      
+      const track = window.fmSearchResultsData[index];
+      fetch('/api/music/queue/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify(track)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          loadFMQueue();
+          if (fmQueue.length === 1 && !fmCurrentTrack) {
+            fmCurrentIndex = 0;
+            fmPlayTrack(track);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Failed to add to queue:', error);
+        alert('Failed to add song to queue');
+      });
+    }
+    
+    function loadFMQueue() {
+      fetch('/api/music/queue', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        fmQueue = data.queue || [];
+        fmCurrentIndex = data.currentIndex !== undefined ? data.currentIndex : -1;
+        updateFMQueueDisplay();
+        
+        if (fmCurrentIndex >= 0 && fmCurrentIndex < fmQueue.length && !fmCurrentTrack) {
+          fmPlayTrack(fmQueue[fmCurrentIndex]);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load queue:', error);
+      });
+    }
+    
+    function updateFMQueueDisplay() {
+      const queueList = document.getElementById('fmQueueList');
+      if (fmQueue.length === 0) {
+        queueList.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:0.85rem;">Queue is empty</div>';
+        return;
+      }
+      
+      queueList.innerHTML = fmQueue.map((track, index) => `
+        <div class="fm-queue-item ${index === fmCurrentIndex ? 'active' : ''}">
+          <div class="fm-queue-item-info">
+            <div class="fm-queue-item-title">${track.title || 'Unknown'}</div>
+            <div class="fm-queue-item-artist">${track.artist || 'Unknown Artist'}</div>
+          </div>
+          ${(fmUserRole === 'ADMIN' || fmUserRole === 'SUPER_ADMIN') ? `
+            <div class="fm-queue-item-actions">
+              <button class="fm-queue-item-btn" onclick="fmRemoveFromQueue(${index})" title="Remove">✕</button>
+              ${index !== fmCurrentIndex ? `<button class="fm-queue-item-btn" onclick="fmPlayNext(${index})" title="Play Next">▶</button>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+    
+    function fmRemoveFromQueue(index) {
+      if (fmUserRole !== 'ADMIN' && fmUserRole !== 'SUPER_ADMIN') return;
+      
+      fetch('/api/music/queue/remove', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({index: index})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          loadFMQueue();
+        }
+      })
+      .catch(error => {
+        console.error('Failed to remove from queue:', error);
+      });
+    }
+    
+    function fmPlayNext(index) {
+      if (fmUserRole !== 'ADMIN' && fmUserRole !== 'SUPER_ADMIN') return;
+      
+      fetch('/api/music/queue/play-next', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({index: index})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          loadFMQueue();
+        }
+      })
+      .catch(error => {
+        console.error('Failed to play next:', error);
+      });
+    }
+    
+    // Allow Enter key to search
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('fmSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            fmSearchSongs();
+          }
+        });
+      }
+    });
   </script>
   
 </head>
@@ -1616,7 +2054,7 @@
             <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             Profile
           </button>
-          <button class="dropdown-item" onclick="window.location.href='/admin.html'">
+          <button class="dropdown-item" id="adminBtn" onclick="window.location.href='/admin.html'" style="display:none;">
             <svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
             Admin
           </button>
@@ -1658,6 +2096,71 @@
         <input id="chatInput" type="text" placeholder="Type a message and press Enter" autocomplete="off" />
         <button id="sendBtn" type="button">Send</button>
       </div>
+      
+      <!-- FM Player -->
+      <div id="fmPlayer" class="fm-player">
+        <div class="fm-header">
+          <div class="fm-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:6px;">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+            <span id="fmStatus">FM Radio</span>
+          </div>
+          <button id="fmToggleBtn" class="fm-toggle-btn" onclick="toggleFMPlayer()" title="Toggle FM Player">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </button>
+        </div>
+        <div id="fmPlayerContent" class="fm-player-content" style="display:none;">
+          <div class="fm-now-playing">
+            <div class="fm-track-info">
+              <div id="fmTrackTitle" class="fm-track-title">No track playing</div>
+              <div id="fmTrackArtist" class="fm-track-artist">Select a song to play</div>
+            </div>
+            <div class="fm-controls">
+              <button id="fmPrevBtn" class="fm-control-btn" onclick="fmPrevious()" title="Previous">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                </svg>
+              </button>
+              <button id="fmPlayBtn" class="fm-control-btn fm-play-btn" onclick="fmTogglePlay()" title="Play/Pause">
+                <svg id="fmPlayIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
+              <button id="fmNextBtn" class="fm-control-btn" onclick="fmNext()" title="Next">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="fm-progress">
+              <div class="fm-progress-bar">
+                <div id="fmProgress" class="fm-progress-fill"></div>
+              </div>
+              <div class="fm-time">
+                <span id="fmCurrentTime">0:00</span> / <span id="fmDuration">0:00</span>
+              </div>
+            </div>
+          </div>
+          <div id="fmAdminControls" class="fm-admin-controls" style="display:none;">
+            <div class="fm-search-box">
+              <input type="text" id="fmSearchInput" placeholder="Search for songs..." class="fm-search-input" />
+              <button id="fmSearchBtn" class="fm-search-btn" onclick="fmSearchSongs()" title="Search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+              </button>
+            </div>
+            <div id="fmSearchResults" class="fm-search-results"></div>
+            <div class="fm-queue">
+              <div class="fm-queue-title">Queue</div>
+              <div id="fmQueueList" class="fm-queue-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="sidebar" id="usersSidebar">
@@ -1697,7 +2200,7 @@
       <div class="profile-header">
         <div id="profileAvatar" class="profile-avatar"></div>
         <div id="profileName" class="profile-name"></div>
-        <div id="profileEmail" class="profile-email"></div>
+        <div id="profileEmail" class="profile-email" style="display: none;"></div>
       </div>
       <div class="profile-body">
         <div class="profile-field">
@@ -1726,3 +2229,4 @@
 
 </body>
 </html>
+
