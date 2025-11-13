@@ -1,24 +1,35 @@
 package com.example.demo.controller;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.Admin;
 import com.example.demo.service.AdminService;
-import com.example.demo.service.UserService;
 import com.example.demo.service.MessageService;
+import com.example.demo.service.PermissionService;
+import com.example.demo.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
 public class AdminAuthController {
+    @Autowired
+    private PermissionService permissionService;
 
     @Autowired
     private AdminService adminService;
@@ -32,48 +43,35 @@ public class AdminAuthController {
     private static final String ADMIN_SESSION_KEY = "admin_session";
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData, 
-                                                     HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData, HttpServletRequest request) {
         Map<String, Object> response = new HashMap<>();
-        
-        try {
-            String username = loginData.get("username");
-            String password = loginData.get("password");
-            
-            if (username == null || password == null || 
-                username.trim().isEmpty() || password.trim().isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Username and password are required");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            Admin admin = this.adminService.authenticateAdmin(username, password);
-            
-            if (admin != null) {
-                // Create admin session
-                HttpSession session = request.getSession(true);
-                session.setAttribute(ADMIN_SESSION_KEY, admin.getUsername());
-                session.setAttribute("admin_role", admin.getRole());
-                session.setAttribute("admin_id", admin.getId());
-                session.setMaxInactiveInterval(24 * 60 * 60); // 24 hours
-                
-                response.put("success", true);
-                response.put("message", "Login successful");
-                response.put("username", admin.getUsername());
-                response.put("role", admin.getRole());
-                response.put("isSuperAdmin", "SUPER_ADMIN".equals(admin.getRole()));
-                
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "Invalid username or password");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-        } catch (Exception e) {
+        String username = loginData.get("username");
+        String password = loginData.get("password");
+
+        if (username == null || password == null || username.trim().isEmpty() || password.trim().isEmpty()) {
             response.put("success", false);
-            response.put("message", "Login failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            response.put("message", "Username and password are required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        Admin admin = this.adminService.authenticateAdmin(username, password);
+
+        if (admin != null) {
+            HttpSession session = request.getSession(true);
+            session.setAttribute(ADMIN_SESSION_KEY, admin.getUsername());
+            session.setAttribute("admin_role", admin.getRole());
+            session.setAttribute("admin_id", admin.getId());
+            session.setMaxInactiveInterval(24 * 60 * 60); // 24 hours
+            response.put("success", true);
+            response.put("message", "Login successful");
+            response.put("username", admin.getUsername());
+            response.put("role", admin.getRole());
+            response.put("isSuperAdmin", "SUPER_ADMIN".equals(admin.getRole()));
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "Invalid username or password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
 

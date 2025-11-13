@@ -14,6 +14,7 @@ import com.example.demo.model.Message;
 public interface MessageRepository extends JpaRepository<Message, Long> {
 	// fetch recent messages for chat history
 	List<Message> findTop50ByOrderByTimestampDesc();
+	long countBySender(String sender);
 	
 	// Optimized method to fetch limited recent messages in proper order
 	@Query("SELECT m FROM Message m ORDER BY m.timestamp DESC LIMIT :limit")

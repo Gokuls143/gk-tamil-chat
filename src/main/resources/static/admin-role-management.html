@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Role Management</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .role-badge { padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .NEW_MEMBER { background: #eee; color: #333; }
+        .MEMBER { background: #cce5ff; color: #004085; }
+        .MODERATOR { background: #ffeeba; color: #856404; }
+        .ADMIN { background: #f8d7da; color: #721c24; }
+        .SUPER_ADMIN { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h2>Admin Role Management</h2>
+    <table id="userTable" border="1" cellpadding="6">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Current Role</th>
+                <th>Change Role</th>
+                <th>Audit Trail</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+    async function fetchUsers() {
+        const res = await fetch('/api/users/all');
+        const data = await res.json();
+        const users = data.users || [];
+        const tbody = document.querySelector('#userTable tbody');
+        tbody.innerHTML = '';
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.username}</td>
+                <td><span class="role-badge ${user.userRole}">${user.userRole}</span></td>
+                <td>
+                    <select onchange="changeRole(${user.id}, this.value)">
+                        <option value="NEW_MEMBER" ${user.userRole==='NEW_MEMBER'?'selected':''}>New Member</option>
+                        <option value="MEMBER" ${user.userRole==='MEMBER'?'selected':''}>Member</option>
+                        <option value="MODERATOR" ${user.userRole==='MODERATOR'?'selected':''}>Moderator</option>
+                        <option value="ADMIN" ${user.userRole==='ADMIN'?'selected':''}>Admin</option>
+                        <option value="SUPER_ADMIN" ${user.userRole==='SUPER_ADMIN'?'selected':''}>Super Admin</option>
+                    </select>
+                </td>
+                <td>${user.roleAudit || ''}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    async function changeRole(userId, newRole) {
+        const auditNote = prompt('Enter audit note for role change:');
+        if (!auditNote) return;
+        await fetch(`/api/roles/assign?userId=${userId}&newRole=${newRole}&auditNote=${encodeURIComponent(auditNote)}`, { method: 'POST' });
+        fetchUsers();
+    }
+    fetchUsers();
+    </script>
+</body>
+</html>

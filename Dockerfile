@@ -1,4 +1,6 @@
+# ===========================
 # Build stage
+# ===========================
 FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /build
@@ -25,12 +27,31 @@ RUN ./gradlew clean bootJar -x test --no-daemon --info && \
     if [ ! -f /build/build/libs/app.jar ]; then echo "ERROR: app.jar not found!"; exit 1; fi && \
     echo "===== app.jar verified ====="
 
+
+# ===========================
 # Runtime stage
+# ===========================
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Copy the JAR file
+# Install Python, pip, ffmpeg, and create a virtual environment for yt-dlp
+RUN apk add --no-cache python3 py3-pip ffmpeg && \
+    python3 -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir yt-dlp && \
+    yt-dlp --version
+
+# Add virtual environment binaries to PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Verify yt-dlp installation
+RUN echo "===== Verifying yt-dlp installation =====" && \
+    yt-dlp --version && \
+    echo "===== yt-dlp installed successfully ====="
+
+# Copy the JAR file from the build stage
 COPY --from=build /build/build/libs/app.jar /app/app.jar
 
 # Verify the JAR was copied

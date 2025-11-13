@@ -11,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "users", indexes = {
@@ -19,6 +21,37 @@ import jakarta.persistence.Table;
     @Index(columnList = "last_activity_at", name = "idx_users_activity")
 })
 public class User {
+    private Boolean isMuted = false;
+    public Boolean getIsMuted() { return this.isMuted; }
+    public void setIsMuted(Boolean isMuted) { this.isMuted = isMuted; }
+    private Boolean isBanned = false;
+    private Boolean isAdmin = false;
+    private Boolean isSuperAdmin = false;
+    public Boolean getIsBanned() { return this.isBanned; }
+    public void setIsBanned(Boolean isBanned) { this.isBanned = isBanned; }
+
+    public Boolean getIsAdmin() { return this.isAdmin; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
+
+    public Boolean getIsSuperAdmin() { return this.isSuperAdmin; }
+    public void setIsSuperAdmin(Boolean isSuperAdmin) { this.isSuperAdmin = isSuperAdmin; }
+    @Column(name = "message_count")
+    private Integer messageCount = 0;
+
+    @Column(name = "last_login_at")
+    private java.time.LocalDateTime lastLoginAt;
+
+    @Column(name = "login_count")
+    private Integer loginCount = 0;
+
+    public Integer getMessageCount() { return this.messageCount; }
+    public void setMessageCount(Integer messageCount) { this.messageCount = messageCount; }
+
+    public java.time.LocalDateTime getLastLoginAt() { return this.lastLoginAt; }
+    public void setLastLoginAt(java.time.LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
+
+    public Integer getLoginCount() { return this.loginCount; }
+    public void setLoginCount(Integer loginCount) { this.loginCount = loginCount; }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
