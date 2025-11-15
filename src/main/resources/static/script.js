@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const email = document.getElementById('username').value.trim().toLowerCase();
             const password = passwordInput ? passwordInput.value : '';
+            console.log('Login submit:', { email, password });
 
             try {
                 const resp = await fetch('/api/login', {
