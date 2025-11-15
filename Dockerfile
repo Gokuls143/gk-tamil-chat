@@ -23,8 +23,8 @@ COPY src src
 # Build the application and verify
 RUN ./gradlew clean bootJar -x test --no-daemon --info && \
     echo "===== Build complete, checking output =====" && \
-    ls -lh /build/build/libs/ && \
-    if [ ! -f /build/build/libs/app.jar ]; then echo "ERROR: app.jar not found!"; exit 1; fi && \
+    ls -lh build/libs/ && \
+    if [ ! -f build/libs/app.jar ]; then echo "ERROR: app.jar not found!"; exit 1; fi && \
     echo "===== app.jar verified ====="
 
 
