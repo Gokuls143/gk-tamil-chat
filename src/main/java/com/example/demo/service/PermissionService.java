@@ -11,7 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.enums.UserRole;
 import com.example.demo.model.User;
-import com.example.demo.permissions.Permission;
+import com.example.demo.enums.Permission;
+import com.example.demo.enums.PermissionCategory;
 import com.example.demo.repository.UserRepository;
 
 /**
@@ -21,6 +22,16 @@ import com.example.demo.repository.UserRepository;
 @Service
 @Transactional(readOnly = true)
 public class PermissionService {
+        /**
+         * Check if user can send links in messages (by User object)
+         */
+        public boolean canSendLink(User user) {
+            if (user == null) return false;
+            if (user.getIsBanned() || user.getIsMuted()) {
+                return false;
+            }
+            return user.hasPermission(Permission.SEND_LINKS);
+        }
     private static final Logger log = LoggerFactory.getLogger(PermissionService.class);
 
     @Autowired
@@ -338,7 +349,7 @@ public class PermissionService {
     /**
      * Check if user has any permissions in a specific category
      */
-    public boolean hasPermissionsInCategory(String username, Permission.PermissionCategory category) {
+    public boolean hasPermissionsInCategory(String username, PermissionCategory category) {
         try {
             User user = findUserByUsername(username);
             return user.getUserRole().getPermissions().stream()
@@ -409,11 +420,12 @@ public class PermissionService {
     // === PRIVATE HELPER METHODS ===
 
     private User findUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    log.warn("User not found: {}", username);
-                    return new RuntimeException("User not found: " + username);
-                });
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            log.error("User not found: {}", username);
+            throw new RuntimeException("User not found: " + username);
+        }
+        return user;
     }
 
     /**

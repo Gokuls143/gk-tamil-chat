@@ -17,8 +17,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 	long countBySender(String sender);
 	
 	// Optimized method to fetch limited recent messages in proper order
-	@Query("SELECT m FROM Message m ORDER BY m.timestamp DESC LIMIT :limit")
-	List<Message> findRecentMessagesLimited(@Param("limit") int limit);
+	@Query("SELECT m FROM Message m ORDER BY m.timestamp DESC")
+	List<Message> findRecentMessagesLimited(org.springframework.data.domain.Pageable pageable);
 	
 	// delete messages by sender (for admin clear chat function)
 	@Modifying

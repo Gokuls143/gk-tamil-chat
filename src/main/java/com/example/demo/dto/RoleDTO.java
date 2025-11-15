@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.demo.enums.UserRole;
-import com.example.demo.permissions.Permission;
+import com.example.demo.enums.Permission;
 
 /**
  * Data Transfer Object for role information

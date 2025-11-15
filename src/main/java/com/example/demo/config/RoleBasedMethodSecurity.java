@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.method.configuration.MethodSecurityExpressionHandler;
+// Removed incorrect import for MethodSecurityExpressionHandler
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.example.demo.permissions.Permission;
+import com.example.demo.enums.Permission;
 import com.example.demo.service.PermissionService;
 
 /**
@@ -21,7 +21,7 @@ import com.example.demo.service.PermissionService;
 public class RoleBasedMethodSecurity {
 
     @Bean
-    @MethodSecurityExpressionHandler
+    // Removed incorrect annotation usage
     public MethodSecurityExpressionHandler createExpressionHandler(PermissionService permissionService) {
         DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
         handler.setDefaultRolePrefix(""); // No prefix for role names

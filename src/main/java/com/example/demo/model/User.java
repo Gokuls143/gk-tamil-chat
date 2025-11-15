@@ -1,42 +1,46 @@
-package com.example.demo.model;
+    package com.example.demo.model;
 
-import java.time.LocalDateTime;
+    import java.time.LocalDateTime;
+    import com.example.demo.enums.UserRole;
+    import jakarta.persistence.Column;
+    import jakarta.persistence.Entity;
+    import jakarta.persistence.GeneratedValue;
+    import jakarta.persistence.GenerationType;
+    import jakarta.persistence.Id;
+    import jakarta.persistence.Index;
+    import jakarta.persistence.Table;
+    import jakarta.persistence.EnumType;
+    import jakarta.persistence.Enumerated;
 
-import com.example.demo.enums.UserRole;
+    @Entity
+    @Table(name = "users", indexes = {
+        @Index(columnList = "email", name = "ux_users_email"),
+        @Index(columnList = "user_role", name = "idx_users_role"),
+        @Index(columnList = "last_activity_at", name = "idx_users_activity")
+    })
+    public class User {
+            // === LEGACY ADMIN FIELDS (kept for backward compatibility) ===
+            @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+            private Boolean isAdmin = false;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+            @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+            private Boolean isMuted = false;
 
-@Entity
-@Table(name = "users", indexes = {
-    @Index(columnList = "email", name = "ux_users_email"),
-    @Index(columnList = "user_role", name = "idx_users_role"),
-    @Index(columnList = "last_activity_at", name = "idx_users_activity")
-})
-public class User {
-    private Boolean isMuted = false;
-    public Boolean getIsMuted() { return this.isMuted; }
-    public void setIsMuted(Boolean isMuted) { this.isMuted = isMuted; }
-    private Boolean isBanned = false;
-    private Boolean isAdmin = false;
-    private Boolean isSuperAdmin = false;
-    public Boolean getIsBanned() { return this.isBanned; }
-    public void setIsBanned(Boolean isBanned) { this.isBanned = isBanned; }
+            @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+            private Boolean isBanned = false;
 
-    public Boolean getIsAdmin() { return this.isAdmin; }
-    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
+            @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+            private Boolean isSuperAdmin = false;
 
-    public Boolean getIsSuperAdmin() { return this.isSuperAdmin; }
-    public void setIsSuperAdmin(Boolean isSuperAdmin) { this.isSuperAdmin = isSuperAdmin; }
-    @Column(name = "message_count")
-    private Integer messageCount = 0;
+            public Boolean getIsAdmin() { return this.isAdmin != null ? this.isAdmin : false; }
+            public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
+            public Boolean getIsMuted() { return this.isMuted != null ? this.isMuted : false; }
+            public void setIsMuted(Boolean isMuted) { this.isMuted = isMuted; }
+            public Boolean getIsBanned() { return this.isBanned != null ? this.isBanned : false; }
+            public void setIsBanned(Boolean isBanned) { this.isBanned = isBanned; }
+            public Boolean getIsSuperAdmin() { return this.isSuperAdmin != null ? this.isSuperAdmin : false; }
+            public void setIsSuperAdmin(Boolean isSuperAdmin) { this.isSuperAdmin = isSuperAdmin; }
+        // ...existing code...
 
     @Column(name = "last_login_at")
     private java.time.LocalDateTime lastLoginAt;
@@ -44,8 +48,7 @@ public class User {
     @Column(name = "login_count")
     private Integer loginCount = 0;
 
-    public Integer getMessageCount() { return this.messageCount; }
-    public void setMessageCount(Integer messageCount) { this.messageCount = messageCount; }
+    // ...existing code...
 
     public java.time.LocalDateTime getLastLoginAt() { return this.lastLoginAt; }
     public void setLastLoginAt(java.time.LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
@@ -103,17 +106,6 @@ public class User {
 
     // === LEGACY ADMIN FIELDS (kept for backward compatibility) ===
 
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isAdmin = false;
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isMuted = false;
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isBanned = false;
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isSuperAdmin = false;
 
     // === NEW ROLE SYSTEM GETTERS & SETTERS ===
 
@@ -213,24 +205,14 @@ public class User {
     public String getProfilePicture() { return this.profilePicture; }
     public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
 
-    public Boolean getIsAdmin() { return this.isAdmin != null ? this.isAdmin : false; }
-    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
-
-    public Boolean getIsMuted() { return this.isMuted != null ? this.isMuted : false; }
-    public void setIsMuted(Boolean isMuted) { this.isMuted = isMuted; }
-
-    public Boolean getIsBanned() { return this.isBanned != null ? this.isBanned : false; }
-    public void setIsBanned(Boolean isBanned) { this.isBanned = isBanned; }
-
-    public Boolean getIsSuperAdmin() { return this.isSuperAdmin != null ? this.isSuperAdmin : false; }
-    public void setIsSuperAdmin(Boolean isSuperAdmin) { this.isSuperAdmin = isSuperAdmin; }
+    // ...existing code...
 
     // === UTILITY METHODS ===
 
     /**
      * Check if user has a specific permission based on their role
      */
-    public boolean hasPermission(com.example.demo.permissions.Permission permission) {
+    public boolean hasPermission(com.example.demo.enums.Permission permission) {
         return getUserRole().hasPermission(permission);
     }
 

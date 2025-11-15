@@ -12,48 +12,17 @@ import com.example.demo.enums.UserRole;
 import com.example.demo.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+       long countByUserRole(UserRole role);
+      User findByUsername(String username);
+      User findByEmail(String email);
+      List<User> findByUsernameIn(Set<String> usernames);
+      List<User> findByUsernameIn(List<String> usernames);
     // === BASIC USER QUERIES ===
-
-    List<User> findByUsernameIn(Set<String> usernames);
-    List<User> findByUsernameIn(List<String> usernames); // For performance optimization
-    User findByUsername(String username);
-    User findByEmail(String email);
-
-    // === ROLE-SPECIFIC QUERIES ===
-
-    /**
-     * Find users by their role
-     */
-    List<User> findByUserRole(UserRole role);
-
-    /**
-     * Count users by role
-     */
-    long countByUserRole(UserRole role);
-
-    /**
-     * Find users with role level >= specified level
-     */
-    @Query("SELECT u FROM User u WHERE u.userRole.level >= :minLevel ORDER BY u.userRole.level DESC, u.username ASC")
-    List<User> findByUserRoleLevelGreaterThanEqual(@Param("minLevel") int minLevel);
-
-    /**
-     * Find users eligible for promotion from a specific role
-     */
-    @Query("SELECT u FROM User u WHERE u.userRole = :currentRole " +
-           "AND (" +
-           "  (u.userRole = 'NEW_MEMBER' AND u.accountCreatedAt <= :cutoffDate AND u.messageCount >= 10) OR " +
-           "  (u.userRole = 'MEMBER' AND u.roleAssignedAt <= :cutoffDate AND u.messageCount >= 100) OR " +
-           "  (u.userRole IN ('VIP', 'MODERATOR', 'ADMIN'))" +
-           ")")
-    List<User> findUsersEligibleForPromotion(@Param("currentRole") UserRole currentRole,
-                                           @Param("cutoffDate") LocalDateTime cutoffDate);
-
-    /**
-     * Find users eligible for automatic progression (simplified version)
-     */
-    @Query("SELECT u FROM User u WHERE u.lastRoleProgressionCheck IS NULL OR u.lastRoleProgressionCheck < :since")
-    List<User> findUsersForProgressionCheck(@Param("since") LocalDateTime since);
+              // To get role distribution or filter by permission level, fetch all users and process in Java using UserRole.getLevel()
+              List<User> findByUserRole(UserRole role);
+              // Find users eligible for automatic progression (simplified version)
+              @Query("SELECT u FROM User u WHERE u.lastRoleProgressionCheck IS NULL OR u.lastRoleProgressionCheck < :since")
+              List<User> findUsersForProgressionCheck(@Param("since") LocalDateTime since);
 
     /**
      * Find recently active users within a time window
@@ -95,11 +64,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("UPDATE User u SET u.lastActivityAt = :activityTime WHERE u.username = :username")
     int updateLastActivity(@Param("username") String username, @Param("activityTime") LocalDateTime activityTime);
 
-    /**
-     * Get role distribution statistics
-     */
-    @Query("SELECT u.userRole, COUNT(u) FROM User u GROUP BY u.userRole ORDER BY u.userRole.level")
-    List<Object[]> getRoleDistributionStatistics();
+       // To get role distribution, fetch all users and process in Java using UserRole.getLevel()
 
     /**
      * Get activity statistics for a date range
@@ -153,8 +118,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Find users with specific permission
      */
-    @Query("SELECT u FROM User u WHERE u.userRole.level >= :requiredLevel")
-    List<User> findUsersWithPermissionLevel(@Param("requiredLevel") int requiredLevel);
+       // To filter users by permission level, fetch all users and process in Java using UserRole.getLevel()
 
     /**
      * Get users sorted by message count (top contributors)

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.User;
-import com.example.demo.model.UserRole;
+import com.example.demo.enums.UserRole;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.YouTubeMusicService;
 

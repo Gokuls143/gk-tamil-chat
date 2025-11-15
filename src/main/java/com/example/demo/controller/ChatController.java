@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.example.demo.dto.MessageDTO;
 import com.example.demo.model.Message;
 import com.example.demo.model.User;
-import com.example.demo.permissions.Permission;
+import com.example.demo.enums.Permission;
 import com.example.demo.repository.MessageRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.PermissionService;
@@ -40,8 +40,6 @@ import com.example.demo.service.UserTrackingService; // user online tracking
 public class ChatController {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
     
-    @Autowired
-    private PermissionService permissionService;
     @Autowired
     private UserTrackingService userTrackingService;
 
@@ -303,7 +301,7 @@ public class ChatController {
         
         try {
             // Use optimized query to get only the messages we need
-            List<Message> latest = this.messageRepository.findRecentMessagesLimited(messageLimit);
+            List<Message> latest = this.messageRepository.findRecentMessagesLimited(org.springframework.data.domain.PageRequest.of(0, messageLimit));
             Collections.reverse(latest); // oldest first for UI
             
             if (latest.isEmpty()) {

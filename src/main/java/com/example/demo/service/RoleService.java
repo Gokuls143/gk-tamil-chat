@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.enums.UserRole;
 import com.example.demo.model.User;
-import com.example.demo.permissions.Permission;
+import com.example.demo.enums.Permission;
 import com.example.demo.repository.UserRepository;
 
 /**
@@ -190,7 +190,25 @@ public class RoleService {
      */
     @Transactional(readOnly = true)
     public List<User> getUsersEligibleForPromotion(UserRole currentRole) {
-        return userRepository.findUsersEligibleForPromotion(currentRole);
+        List<User> users = userRepository.findByUserRole(currentRole);
+        List<User> eligible = new java.util.ArrayList<>();
+        LocalDateTime now = java.time.LocalDateTime.now();
+
+        for (User user : users) {
+            // Example logic: adjust as needed for your rules
+            if (currentRole == UserRole.NEW_MEMBER) {
+                if (user.getAccountCreatedAt() != null && user.getAccountCreatedAt().isBefore(now.minusDays(1)) && user.getMessageCount() >= 10) {
+                    eligible.add(user);
+                }
+            } else if (currentRole == UserRole.MEMBER) {
+                if (user.getRoleAssignedAt() != null && user.getRoleAssignedAt().isBefore(now.minusDays(1)) && user.getMessageCount() >= 100) {
+                    eligible.add(user);
+                }
+            } else if (currentRole == UserRole.VIP || currentRole == UserRole.MODERATOR || currentRole == UserRole.ADMIN) {
+                eligible.add(user);
+            }
+        }
+        return eligible;
     }
 
     /**
@@ -201,7 +219,7 @@ public class RoleService {
         RoleStatistics stats = new RoleStatistics();
 
         for (UserRole role : UserRole.values()) {
-            int count = userRepository.countByUserRole(role);
+            int count = (int) userRepository.countByUserRole(role);
             stats.addRoleCount(role, count);
         }
 
@@ -252,8 +270,9 @@ public class RoleService {
     // === PRIVATE HELPER METHODS ===
 
     private User findUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RoleException("User not found: " + username));
+        User user = userRepository.findByUsername(username);
+        if (user == null) throw new RuntimeException("User not found: " + username);
+        return user;
     }
 
     private void validatePromotion(User user, UserRole targetRole, User assigner) throws RoleException {

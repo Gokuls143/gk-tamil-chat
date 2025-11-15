@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.enums.UserRole;
 import com.example.demo.model.User;
-import com.example.demo.permissions.Permission;
+import com.example.demo.enums.Permission;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.PermissionService;
 import com.example.demo.service.RoleService;
@@ -90,8 +90,8 @@ public class RoleController {
     public ResponseEntity<Map<String, Object>> getUserRole(@PathVariable String username) {
         try {
             UserRole role = permissionService.getUserRole(username);
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
+            User user = userRepository.findByUsername(username);
+            if (user == null) throw new RuntimeException("User not found: " + username);
 
             Map<String, Object> response = new HashMap<>();
             response.put("username", username);
@@ -180,8 +180,8 @@ public class RoleController {
         String promotedBy = principal.getName();
 
         try {
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
+            User user = userRepository.findByUsername(username);
+            if (user == null) throw new RuntimeException("User not found: " + username);
             UserRole nextRole = user.getUserRole().getNextRole();
 
             if (nextRole == user.getUserRole()) {
