@@ -91,12 +91,19 @@ public class LoginController {
         String password = loginRequest.get("password");
         
         User existingUser = this.userRepository.findByEmail(email);
+        log.info("Login attempt: email={}, password={} (raw)", email, password);
+        if (existingUser != null) {
+            log.info("DB user found: email={}, username={}, passwordHash={}", existingUser.getEmail(), existingUser.getUsername(), existingUser.getPassword());
+        } else {
+            log.warn("No user found in DB for email={}", email);
+        }
         if (existingUser == null) {
             log.debug("User not found with email: {}", email);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
 
         boolean ok = this.passwordEncoder.matches(password, existingUser.getPassword());
+        log.info("Password match result for {}: {}", email, ok);
         log.debug("Password match for {}: {}", email, ok);
         if (ok) {
             String username = existingUser.getUsername();
