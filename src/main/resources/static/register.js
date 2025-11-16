@@ -1,3 +1,25 @@
+  // Username availability check
+  if (usernameEl) {
+    usernameEl.addEventListener('blur', async () => {
+      const username = usernameEl.value.trim().toLowerCase();
+      if (!username) return;
+      try {
+        const resp = await fetch(`/users/exists?username=${encodeURIComponent(username)}`);
+        if (resp.ok) {
+          const exists = await resp.json();
+          if (exists) {
+            if (fieldError) fieldError.textContent = 'Username already taken';
+            usernameEl.classList.add('input-error');
+          } else {
+            if (fieldError) fieldError.textContent = '';
+            usernameEl.classList.remove('input-error');
+          }
+        }
+      } catch (err) {
+        console.error('Username check failed', err);
+      }
+    });
+  }
 document.addEventListener('DOMContentLoaded', () => {
   const registerForm = document.getElementById('registerForm');
   const registerStatus = document.getElementById('registerStatus');

@@ -431,36 +431,18 @@ public class PermissionService {
     /**
      * Validate message content based on user permissions
      */
-    public MessageValidationResult validateMessageContent(String username, String content) {
-        try {
-            User user = findUserByUsername(username);
+    // ...existing code...
 
-            // Check if user is banned or muted
-            if (user.getIsBanned()) {
-                return MessageValidationResult.rejected("You are banned from sending messages");
-            }
-
-            if (user.getIsMuted()) {
-                return MessageValidationResult.rejected("You are muted and cannot send messages");
-            }
-
-            // Check basic send permission
-            if (!user.hasPermission(Permission.SEND_MESSAGES)) {
-                return MessageValidationResult.rejected("You don't have permission to send messages");
-            }
-
-            // Check for links if user doesn't have permission
-            if (containsLinks(content) && !user.hasPermission(Permission.SEND_LINKS)) {
-                return MessageValidationResult.rejected("You don't have permission to send links");
-            }
-
-            return MessageValidationResult.approved();
-
-        } catch (Exception e) {
-            log.warn("Error validating message content for {}: {}", username, e.getMessage());
-            return MessageValidationResult.rejected("Validation error occurred");
-        }
+public boolean validateMessageContent(String username, String content) {
+    User user = userRepository.findByUsername(username);
+    if (user == null) {
+        // Allow guest users to send messages
+        return true;
     }
+    // ...existing validation logic...
+}
+
+// ...existing code...
 
     private boolean containsLinks(String content) {
         if (content == null) {

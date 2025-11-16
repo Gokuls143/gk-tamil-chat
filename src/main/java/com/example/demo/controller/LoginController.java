@@ -272,7 +272,8 @@ public class LoginController {
     @GetMapping("/users/exists")
     public ResponseEntity<Boolean> usernameExists(@RequestParam("username") String username) {
         if (username == null || username.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(true);
+            // Treat empty username as not taken, avoid error
+            return ResponseEntity.ok(false);
         }
         boolean exists = this.userRepository.findByUsername(username.trim().toLowerCase()) != null;
         return ResponseEntity.ok(exists);
