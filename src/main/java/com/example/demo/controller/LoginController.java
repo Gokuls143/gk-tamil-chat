@@ -3,8 +3,6 @@ package com.example.demo.controller;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +18,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.User;
+import com.example.demo.model.LoginRequest;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.SessionManagementService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class LoginController {
-    private static final Logger log = LoggerFactory.getLogger(LoginController.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -75,100 +79,86 @@ public class LoginController {
         user.setEmail(email);
         user.setPassword(this.passwordEncoder.encode(user.getPassword()));
         this.userRepository.save(user);
-        log.debug("Registered user={}", username);
+        logger.debug("Registered user={}", username);
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginRequest, 
-                                      jakarta.servlet.http.HttpSession session,
-                                      jakarta.servlet.http.HttpServletRequest request) {
-        if (loginRequest == null || loginRequest.get("email") == null || loginRequest.get("password") == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email and password are required");
-        }
-
-        String email = loginRequest.get("email").trim().toLowerCase();
-        String password = loginRequest.get("password");
-        
-        User existingUser = this.userRepository.findByEmail(email);
-        log.info("Login attempt: email={}, password={} (raw)", email, password);
-        if (existingUser != null) {
-            log.info("DB user found: email={}, username={}, passwordHash={}", existingUser.getEmail(), existingUser.getUsername(), existingUser.getPassword());
-        } else {
-            log.warn("No user found in DB for email={}", email);
-        }
+    @PostMapping("/api/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest req, HttpServletRequest request) {
+        HttpSession session = request.getSession(true);
+        logger.debug("Login attempt: email={}, password={}", req.getEmail(), req.getPassword());
+        User existingUser = userRepository.findByEmail(req.getEmail().trim().toLowerCase());
         if (existingUser == null) {
-            log.debug("User not found with email: {}", email);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+            logger.debug("No user found for email={}", req.getEmail());
+            return ResponseEntity.status(401).body("Invalid credentials");
         }
-
-        boolean ok = this.passwordEncoder.matches(password, existingUser.getPassword());
-        log.info("Password match result for {}: {}", email, ok);
-        log.debug("Password match for {}: {}", email, ok);
-        if (ok) {
-            String username = existingUser.getUsername();
+        logger.debug("DB user found: email={}, username={}, passwordHash={}", existingUser.getEmail(), existingUser.getUsername(), existingUser.getPassword());
+        boolean ok = passwordEncoder.matches(req.getPassword(), existingUser.getPassword());
+        logger.debug("Password match result for {}: {}", req.getEmail(), ok);
+        if (!ok) {
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+        
+        String username = existingUser.getUsername();
             
-            // Check if user is banned
-            if (existingUser.getIsBanned()) {
-                log.info("Banned user {} attempted to login", username);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Please contact administrators.");
-            }
+        // Check if user is banned
+        if (existingUser.getIsBanned()) {
+            logger.info("Banned user {} attempted to login", username);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Please contact administrators.");
+        }
+        
+        // Check if there's already a DIFFERENT user in THIS BROWSER SESSION
+        Object currentSessionUser = session.getAttribute("username");
+        if (currentSessionUser != null && !username.equals(currentSessionUser)) {
+            logger.info("BROWSER SESSION SWITCH: Different user ({}) detected in this browser session. Switching to: {}", 
+                     currentSessionUser, username);
             
-            // Check if there's already a DIFFERENT user in THIS BROWSER SESSION
-            Object currentSessionUser = session.getAttribute("username");
-            if (currentSessionUser != null && !username.equals(currentSessionUser)) {
-                log.info("BROWSER SESSION SWITCH: Different user ({}) detected in this browser session. Switching to: {}", 
-                         currentSessionUser, username);
-                
-                // Clean up old user from THIS SESSION only
-                this.sessionService.removeSession(session.getId());
-                
-                // FORCE invalidate session - this affects only THIS browser
-                try {
-                    session.invalidate();
-                    log.info("Browser session invalidated - only this browser will need to login again");
-                } catch (Exception e) {
-                    log.warn("Session already invalidated: {}", e.getMessage());
-                }
-                
-                // Create completely new session for this browser
-                session = request.getSession(true);
-                log.info("New browser session created: {} for user: {}", session.getId(), username);
-            }
+            // Clean up old user from THIS SESSION only
+            this.sessionService.removeSession(session.getId());
             
-            // For browser-specific approach: Allow same user to login from different browsers
-            // Only track this session, don't remove user's other browser sessions
-            log.info("Allowing user {} to login in browser session: {}", username, session.getId());
-            
-            // Register this browser session for this user
-            this.sessionService.registerUserSession(username, session);
-            
-            // Auto-promote super admin (popcorn user)
-            if ("popcorn".equals(username) || "gokulkannans92@gmail.com".equals(existingUser.getEmail())) {
-                if (!existingUser.getIsSuperAdmin()) {
-                    existingUser.setIsSuperAdmin(true);
-                    existingUser.setIsAdmin(true);
-                    this.userRepository.save(existingUser);
-                    log.info("Auto-promoted user {} to Super Admin", username);
-                }
-            }
-            
+            // FORCE invalidate session - this affects only THIS browser
             try {
-                session.setAttribute("username", username);
-                log.info("SUCCESS: User {} logged in with session: {}", username, session.getId());
+                session.invalidate();
+                logger.info("Browser session invalidated - only this browser will need to login again");
             } catch (Exception e) {
-                log.error("Failed to set session attribute: {}", e.getMessage());
+                logger.warn("Session already invalidated: {}", e.getMessage());
             }
             
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Login successful");
-            response.put("username", username);
-            response.put("isAdmin", existingUser.getIsAdmin().toString());
-            response.put("isSuperAdmin", existingUser.getIsSuperAdmin().toString());
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+            // Create completely new session for this browser
+            session = request.getSession(true);
+            logger.info("New browser session created: {} for user: {}", session.getId(), username);
         }
+        
+        // For browser-specific approach: Allow same user to login from different browsers
+        // Only track this session, don't remove user's other browser sessions
+        logger.info("Allowing user {} to login in browser session: {}", username, session.getId());
+        
+        // Register this browser session for this user
+        this.sessionService.registerUserSession(username, session);
+        
+        // Auto-promote super admin (popcorn user)
+        if ("popcorn".equals(username) || "gokulkannans92@gmail.com".equals(existingUser.getEmail())) {
+            if (!existingUser.getIsSuperAdmin()) {
+                existingUser.setIsSuperAdmin(true);
+                existingUser.setIsAdmin(true);
+                this.userRepository.save(existingUser);
+                logger.info("Auto-promoted user {} to Super Admin", username);
+            }
+        }
+        
+        try {
+            session.setAttribute("username", username);
+            logger.info("SUCCESS: User {} logged in with session: {}", username, session.getId());
+        } catch (Exception e) {
+            logger.error("Failed to set session attribute: {}", e.getMessage());
+        }
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Login successful");
+        response.put("username", username);
+        response.put("isAdmin", existingUser.getIsAdmin().toString());
+        response.put("isSuperAdmin", existingUser.getIsSuperAdmin().toString());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/session/me")
@@ -215,7 +205,7 @@ public class LoginController {
             if (username != null) {
                 // Only remove THIS browser session, keep other browsers logged in
                 this.sessionService.removeSession(session.getId());
-                log.info("Logged out user {} from browser session {} (other browser sessions remain active)", 
+                logger.info("Logged out user {} from browser session {} (other browser sessions remain active)", 
                          username, session.getId());
             }
             session.invalidate();
@@ -238,7 +228,7 @@ public class LoginController {
             msg.setText("Hello,\n\nYour username: " + user.getUsername() + "\n\nIf you didn't request this, ignore.");
             this.mailSender.send(msg);
         } else if (user != null) {
-            log.info("Mail sender not configured; would send username to {}", normalized);
+            logger.info("Mail sender not configured; would send username to {}", normalized);
         }
         // Always respond 200 to avoid account enumeration
         return ResponseEntity.ok("If the email is registered, we sent instructions.");
@@ -261,9 +251,9 @@ public class LoginController {
                 "Your username: " + user.getUsername() + "\n\n" +
                 "If you didn't request this, please ignore this email.");
             this.mailSender.send(msg);
-            log.info("Password reset email sent to {}", normalized);
+            logger.info("Password reset email sent to {}", normalized);
         } else if (user != null) {
-            log.info("Mail sender not configured; would send password reset to {}", normalized);
+            logger.info("Mail sender not configured; would send password reset to {}", normalized);
         }
         // Always respond 200 to avoid account enumeration
         return ResponseEntity.ok("If the email is registered, you will receive password reset instructions.");

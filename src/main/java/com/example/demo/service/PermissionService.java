@@ -433,14 +433,27 @@ public class PermissionService {
      */
     // ...existing code...
 
-public boolean validateMessageContent(String username, String content) {
+    public MessageValidationResult validateMessageContent(String username, String content) {
     User user = userRepository.findByUsername(username);
     if (user == null) {
         // Allow guest users to send messages
-        return true;
+        return MessageValidationResult.approved();
     }
-    // ...existing validation logic...
-}
+    // Example: check for banned/muted
+    if (user.getIsBanned()) {
+        return MessageValidationResult.rejected("Account is banned.");
+    }
+    if (user.getIsMuted()) {
+        return MessageValidationResult.rejected("Account is muted.");
+    }
+    // Example: check for links permission
+    if (containsLinks(content) && !user.hasPermission(Permission.SEND_LINKS)) {
+        return MessageValidationResult.rejected("You do not have permission to send links.");
+    }
+    // Add other validation as needed...
+
+    return MessageValidationResult.approved();
+    }
 
 // ...existing code...
 
