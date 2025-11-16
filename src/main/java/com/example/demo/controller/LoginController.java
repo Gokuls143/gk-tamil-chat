@@ -83,7 +83,7 @@ public class LoginController {
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
-    @PostMapping("/api/login")
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req, HttpServletRequest request) {
         HttpSession session = request.getSession(true);
         logger.debug("Login attempt: email={}, password={}", req.getEmail(), req.getPassword());
