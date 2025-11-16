@@ -9,13 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.model.User;
 import com.example.demo.model.LoginRequest;
@@ -24,248 +18,275 @@ import com.example.demo.service.SessionManagementService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import jakarta.servlet.http.HttpSession;
+
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class LoginController {
+
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender mailSender; // may be null
+    private final JavaMailSender mailSender; 
     private final SessionManagementService sessionService;
 
     public LoginController(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            @Autowired(required = false) JavaMailSender mailSender,
                            SessionManagementService sessionService) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.mailSender = mailSender; // null if mail not configured
+        this.mailSender = mailSender;
         this.sessionService = sessionService;
     }
 
+    /* -------------------------------------------------------------------------
+     * REGISTER
+     * ------------------------------------------------------------------------- */
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody User user) {
-        if (user == null || user.getUsername() == null || user.getPassword() == null || user.getEmail() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username, email and password are required");
+
+        if (user == null ||
+            user.getUsername() == null ||
+            user.getPassword() == null ||
+            user.getEmail() == null) {
+            return ResponseEntity.badRequest().body("Username, email and password are required");
         }
-        
+
         if (user.getGender() == null || user.getGender().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gender is required");
+            return ResponseEntity.badRequest().body("Gender is required");
         }
-        
+
         if (user.getAge() == null || user.getAge() < 1 || user.getAge() > 150) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Valid age is required");
+            return ResponseEntity.badRequest().body("Valid age is required");
         }
 
         String username = user.getUsername().trim().toLowerCase();
         String email = user.getEmail().trim().toLowerCase();
+
         if (!email.contains("@") || !email.contains(".")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid email address");
+            return ResponseEntity.badRequest().body("Invalid email address");
         }
 
-        if (this.userRepository.findByUsername(username) != null) {
+        if (userRepository.findByUsername(username) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already registered");
         }
-        if (this.userRepository.findByEmail(email) != null) {
+        if (userRepository.findByEmail(email) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already registered");
         }
 
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(this.passwordEncoder.encode(user.getPassword()));
-        this.userRepository.save(user);
-        logger.debug("Registered user={}", username);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+
+        logger.info("User registered: {}", username);
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
+    /* -------------------------------------------------------------------------
+     * LOGIN
+     * ------------------------------------------------------------------------- */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req, HttpServletRequest request) {
-        HttpSession session = request.getSession(true);
-        logger.debug("Login attempt: email={}, password={}", req.getEmail(), req.getPassword());
-        User existingUser = userRepository.findByEmail(req.getEmail().trim().toLowerCase());
+
+        if (req == null || req.getEmail() == null || req.getPassword() == null) {
+            return ResponseEntity.badRequest().body("Email and password required");
+        }
+
+        String email = req.getEmail().trim().toLowerCase();
+
+        logger.info("Login attempt for email={}", email);
+
+        User existingUser = userRepository.findByEmail(email);
         if (existingUser == null) {
-            logger.debug("No user found for email={}", req.getEmail());
+            logger.info("Login failed: user not found {}", email);
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-        logger.debug("DB user found: email={}, username={}, passwordHash={}", existingUser.getEmail(), existingUser.getUsername(), existingUser.getPassword());
-        boolean ok = passwordEncoder.matches(req.getPassword(), existingUser.getPassword());
-        logger.debug("Password match result for {}: {}", req.getEmail(), ok);
-        if (!ok) {
+
+        if (!passwordEncoder.matches(req.getPassword(), existingUser.getPassword())) {
+            logger.info("Login failed: invalid password for {}", email);
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-        
-        String username = existingUser.getUsername();
-            
-        // Check if user is banned
+
         if (existingUser.getIsBanned()) {
-            logger.info("Banned user {} attempted to login", username);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Please contact administrators.");
+            logger.info("BANNED user attempted login: {}", email);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account has been banned. Contact admin.");
         }
-        
-        // Check if there's already a DIFFERENT user in THIS BROWSER SESSION
+
+        HttpSession session = request.getSession(true);
+        String username = existingUser.getUsername();
+
+        // Check if session belongs to different user
         Object currentSessionUser = session.getAttribute("username");
         if (currentSessionUser != null && !username.equals(currentSessionUser)) {
-            logger.info("BROWSER SESSION SWITCH: Different user ({}) detected in this browser session. Switching to: {}", 
-                     currentSessionUser, username);
-            
-            // Clean up old user from THIS SESSION only
-            this.sessionService.removeSession(session.getId());
-            
-            // FORCE invalidate session - this affects only THIS browser
-            try {
-                session.invalidate();
-                logger.info("Browser session invalidated - only this browser will need to login again");
-            } catch (Exception e) {
-                logger.warn("Session already invalidated: {}", e.getMessage());
-            }
-            
-            // Create completely new session for this browser
+
+            sessionService.removeSession(session.getId());
+            try { session.invalidate(); } catch (Exception ignored) {}
+
             session = request.getSession(true);
-            logger.info("New browser session created: {} for user: {}", session.getId(), username);
+            logger.info("New session created for {}", username);
         }
-        
-        // For browser-specific approach: Allow same user to login from different browsers
-        // Only track this session, don't remove user's other browser sessions
-        logger.info("Allowing user {} to login in browser session: {}", username, session.getId());
-        
-        // Register this browser session for this user
-        this.sessionService.registerUserSession(username, session);
-        
-        // Auto-promote super admin (popcorn user)
+
+        sessionService.registerUserSession(username, session);
+
+        // Auto promote super admin (your custom logic)
         if ("popcorn".equals(username) || "gokulkannans92@gmail.com".equals(existingUser.getEmail())) {
             if (!existingUser.getIsSuperAdmin()) {
                 existingUser.setIsSuperAdmin(true);
                 existingUser.setIsAdmin(true);
-                this.userRepository.save(existingUser);
-                logger.info("Auto-promoted user {} to Super Admin", username);
+                userRepository.save(existingUser);
             }
         }
-        
-        try {
-            session.setAttribute("username", username);
-            logger.info("SUCCESS: User {} logged in with session: {}", username, session.getId());
-        } catch (Exception e) {
-            logger.error("Failed to set session attribute: {}", e.getMessage());
-        }
-        
+
+        session.setAttribute("username", username);
+        logger.info("User {} logged in, session={}", username, session.getId());
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Login successful");
         response.put("username", username);
         response.put("isAdmin", existingUser.getIsAdmin().toString());
         response.put("isSuperAdmin", existingUser.getIsSuperAdmin().toString());
+
         return ResponseEntity.ok(response);
     }
 
+    /* -------------------------------------------------------------------------
+     * SESSION: CURRENT USER
+     * ------------------------------------------------------------------------- */
     @GetMapping("/session/me")
-    public ResponseEntity<String> currentUser(jakarta.servlet.http.HttpSession session) {
-        Object u = session == null ? null : session.getAttribute("username");
-        if (u == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
-        
-        // Check if user is still valid (not banned/deleted)
-        User user = this.userRepository.findByUsername(u.toString());
+    public ResponseEntity<?> currentUser(HttpSession session) {
+
+        if (session == null || session.getAttribute("username") == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+
+        String username = String.valueOf(session.getAttribute("username"));
+        User user = userRepository.findByUsername(username);
+
         if (user == null) {
-            // User was deleted, invalidate session
-            if (session != null) {
-                session.invalidate();
-            }
+            session.invalidate();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
         }
-        
+
         if (user.getIsBanned()) {
-            // User is banned, invalidate session
-            if (session != null) {
-                session.invalidate();
-            }
+            session.invalidate();
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account banned");
         }
-        
-        return ResponseEntity.ok(String.valueOf(u));
+
+        return ResponseEntity.ok(username);
     }
-    
+
+    /* -------------------------------------------------------------------------
+     * CHECK ACTIVE SESSION
+     * ------------------------------------------------------------------------- */
     @GetMapping("/session/check")
-    public ResponseEntity<?> checkExistingSession(jakarta.servlet.http.HttpSession session) {
-        Object currentUser = session == null ? null : session.getAttribute("username");
+    public ResponseEntity<?> checkExistingSession(HttpSession session) {
+
         Map<String, Object> response = new HashMap<>();
+        Object currentUser = session == null ? null : session.getAttribute("username");
+
         response.put("hasActiveSession", currentUser != null);
         if (currentUser != null) {
             response.put("username", currentUser.toString());
         }
+
         return ResponseEntity.ok(response);
     }
-    
+
+    /* -------------------------------------------------------------------------
+     * LOGOUT
+     * ------------------------------------------------------------------------- */
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(jakarta.servlet.http.HttpSession session) {
+    public ResponseEntity<String> logout(HttpSession session) {
+
         if (session != null) {
             Object username = session.getAttribute("username");
+
             if (username != null) {
-                // Only remove THIS browser session, keep other browsers logged in
-                this.sessionService.removeSession(session.getId());
-                logger.info("Logged out user {} from browser session {} (other browser sessions remain active)", 
-                         username, session.getId());
+                sessionService.removeSession(session.getId());
+                logger.info("User {} logged out from session={}", username, session.getId());
             }
+
             session.invalidate();
         }
+
         return ResponseEntity.ok("Logged out successfully");
     }
 
+    /* -------------------------------------------------------------------------
+     * FORGOT USERNAME
+     * ------------------------------------------------------------------------- */
     @PostMapping("/forgot-username")
     public ResponseEntity<String> forgotUsername(@RequestBody Map<String, String> body) {
-        String email = body == null ? null : body.get("email");
+
+        String email = (body == null) ? null : body.get("email");
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Email required");
         }
-        String normalized = email.trim().toLowerCase();
-        User user = this.userRepository.findByEmail(normalized);
-        if (user != null && this.mailSender != null) {
+
+        email = email.trim().toLowerCase();
+        User user = userRepository.findByEmail(email);
+
+        if (user != null && mailSender != null) {
+
             SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setTo(normalized);
-            msg.setSubject("Your username");
-            msg.setText("Hello,\n\nYour username: " + user.getUsername() + "\n\nIf you didn't request this, ignore.");
-            this.mailSender.send(msg);
-        } else if (user != null) {
-            logger.info("Mail sender not configured; would send username to {}", normalized);
+            msg.setTo(email);
+            msg.setSubject("Your Username");
+            msg.setText("Hello,\n\nYour username is: " + user.getUsername());
+
+            mailSender.send(msg);
         }
-        // Always respond 200 to avoid account enumeration
+
         return ResponseEntity.ok("If the email is registered, we sent instructions.");
     }
 
-    @PostMapping("/api/forgot-password")
+    /* -------------------------------------------------------------------------
+     * FORGOT PASSWORD
+     * ------------------------------------------------------------------------- */
+    @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> body) {
-        String email = body == null ? null : body.get("email");
+
+        String email = (body == null) ? null : body.get("email");
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Email required");
         }
-        String normalized = email.trim().toLowerCase();
-        User user = this.userRepository.findByEmail(normalized);
-        if (user != null && this.mailSender != null) {
+
+        email = email.trim().toLowerCase();
+        User user = userRepository.findByEmail(email);
+
+        if (user != null && mailSender != null) {
+
             SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setTo(normalized);
-            msg.setSubject("Password Reset Request");
+            msg.setTo(email);
+            msg.setSubject("Password Reset");
             msg.setText("Hello " + user.getUsername() + ",\n\n" +
-                "You requested a password reset. Please contact the administrator to reset your password.\n\n" +
-                "Your username: " + user.getUsername() + "\n\n" +
-                "If you didn't request this, please ignore this email.");
-            this.mailSender.send(msg);
-            logger.info("Password reset email sent to {}", normalized);
-        } else if (user != null) {
-            logger.info("Mail sender not configured; would send password reset to {}", normalized);
+                "Please contact administrator to reset your password.\n\n" +
+                "Your username: " + user.getUsername());
+
+            mailSender.send(msg);
         }
-        // Always respond 200 to avoid account enumeration
-        return ResponseEntity.ok("If the email is registered, you will receive password reset instructions.");
+
+        return ResponseEntity.ok("If the email is registered, you will receive instructions.");
     }
 
+    /* -------------------------------------------------------------------------
+     * CHECK USERNAME EXISTS
+     * ------------------------------------------------------------------------- */
     @GetMapping("/users/exists")
     public ResponseEntity<Boolean> usernameExists(@RequestParam("username") String username) {
+
         if (username == null || username.trim().isEmpty()) {
-            // Treat empty username as not taken, avoid error
             return ResponseEntity.ok(false);
         }
-        boolean exists = this.userRepository.findByUsername(username.trim().toLowerCase()) != null;
+
+        boolean exists =
+            userRepository.findByUsername(username.trim().toLowerCase()) != null;
+
         return ResponseEntity.ok(exists);
     }
 }
