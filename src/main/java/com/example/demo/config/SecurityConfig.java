@@ -10,11 +10,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
-            // completely disable CSRF for REST APIs
+            // TOTALLY DISABLE CSRF (required for frontend JSON login)
             .csrf(csrf -> csrf.disable())
 
-            // allow these APIs without login
+            // Allow login/register without authentication
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/login",
@@ -29,16 +30,16 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // no HTTP Basic auth
+            // No HTTP Basic
             .httpBasic(basic -> basic.disable())
 
-            // allow CORS
+            // Allow all CORS
             .cors(cors -> cors.configurationSource(request -> {
                 var config = new org.springframework.web.cors.CorsConfiguration();
-                config.setAllowCredentials(true);
                 config.addAllowedOriginPattern("*");
                 config.addAllowedHeader("*");
                 config.addAllowedMethod("*");
+                config.setAllowCredentials(true);
                 return config;
             }));
 
