@@ -152,23 +152,25 @@ document.addEventListener('DOMContentLoaded', () => {
             setRegisterStatus('', 'Submitting...');
             try {
                 const resp = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-
-                if (resp.status === 201) {
-                    setRegisterStatus('success', 'User registered successfully');
-                } else if (resp.status === 409) {
-                    setRegisterStatus('error', 'User already registered');
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, username, password })
+                })
+                .then(response => {
+                if (response.ok) {
+                // Registration successful
+                // ...existing code...
+                } else if (response.status === 409 || response.status === 400) {
+                // Username or email already taken
+                showError('Username or email already taken.');
                 } else {
-                    const text = await resp.text();
-                    setRegisterStatus('error', text || `Error ${resp.status}`);
+                showError('Registration failed. Please try again.');
                 }
-            } catch (err) {
-                console.error('Register request failed', err);
-                setRegisterStatus('error', 'Network error');
-            }
+                })
+                .catch(() => showError('Network error. Please try again.'));
+
+                // ...existing code...
+                }
 
             // optional: clear message after a short time
             setTimeout(() => {
